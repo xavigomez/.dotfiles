@@ -1,0 +1,29 @@
+# Zsh ephemeral files
+.zsh_history
+.zcompdump*
+.zsh_sessions/
+
+# macOS
+.DS_Store
+.CFUserTextEncoding
+
+# Editor temp files
+.swp
+.swo
+*~
+
+# IDE
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+npm-debug.log
+
+# Environment
+.env
+.env.local
