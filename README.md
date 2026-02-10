@@ -18,6 +18,14 @@ My personal dotfiles managed with GNU Stow.
 
 ## Installation
 
+### Prerequisites
+
+On a **factory-reset Mac**, the script handles everything, but be aware:
+- **Xcode Command Line Tools** will be installed first (required for Homebrew). This takes a few minutes and may show a system dialog.
+- Apple Silicon Macs (`/opt/homebrew`) and Intel Macs (`/usr/local`) both supported automatically.
+
+If you're on a machine that already has developer tools, the script detects this and skips the installation.
+
 ### First-time setup:
 
 ```bash
@@ -26,13 +34,14 @@ cd ~/.dotfiles
 ```
 
 The script will:
-1. Install Homebrew (if needed)
-2. Install GNU Stow (if needed)
-3. Run `brew bundle` to install all packages
-4. Install oh-my-zsh and plugins
-5. Use stow to create symlinks for zsh, zed, and nvim configs
-6. Link the Ghostty config
-7. Display next steps
+1. Install Xcode Command Line Tools (if needed)
+2. Install Homebrew (if needed)
+3. Install GNU Stow (if needed)
+4. Run `brew bundle` to install all packages
+5. Install oh-my-zsh and plugins
+6. Use stow to create symlinks for zsh, zed, and nvim configs
+7. Link the Ghostty config
+8. Display next steps
 
 ### Subsequent machines:
 

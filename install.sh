@@ -7,6 +7,23 @@ echo "🚀 Bootstrapping dotfiles..."
 DOTFILES_DIR="$HOME/.dotfiles"
 cd "$DOTFILES_DIR"
 
+# Step 0: Install Xcode Command Line Tools if needed
+if ! xcode-select -p &> /dev/null; then
+    echo "⚠️  Xcode Command Line Tools not found"
+    echo "📦 Installing Xcode Command Line Tools..."
+    echo "   (This will take a few minutes. You may see a system dialog asking for permission.)"
+    xcode-select --install
+    
+    echo ""
+    echo "⏳ Waiting for installation to complete..."
+    until xcode-select -p &> /dev/null; do
+        sleep 5
+    done
+    echo "✓ Xcode Command Line Tools installed"
+else
+    echo "✓ Xcode Command Line Tools already installed"
+fi
+
 # Step 1: Install Homebrew if needed
 if ! command -v brew &> /dev/null; then
     echo "📦 Installing Homebrew..."
@@ -14,6 +31,9 @@ if ! command -v brew &> /dev/null; then
 else
     echo "✓ Homebrew is already installed"
 fi
+
+# Ensure brew is in PATH (needed on Apple Silicon after fresh install)
+eval "$(/opt/homebrew/bin/brew shellenv)" 2>/dev/null || eval "$(/usr/local/bin/brew shellenv)" 2>/dev/null || true
 
 # Step 2: Ensure stow is installed
 if ! command -v stow &> /dev/null; then
