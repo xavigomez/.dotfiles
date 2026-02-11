@@ -47,6 +47,14 @@ fi
 echo "📦 Installing packages from Brewfile..."
 brew bundle install --file="$DOTFILES_DIR/Brewfile"
 
+# Step 3.5: Install LTS Node.js via fnm
+if command -v fnm &> /dev/null; then
+    echo "📦 Installing LTS Node.js via fnm..."
+    fnm install --lts
+    fnm default lts
+    echo "✓ LTS Node.js installed and set as default"
+fi
+
 # Step 4: Install oh-my-zsh if not already installed
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
     echo "📦 Installing oh-my-zsh..."

@@ -83,6 +83,9 @@ source $ZSH/oh-my-zsh.sh
 
 # User configuration
 
+# fnm (Fast Node Manager)
+eval "$(fnm env --use-on-cd)"
+
 # export MANPATH="/usr/local/man:$MANPATH"
 
 # You may need to manually set your language environment
