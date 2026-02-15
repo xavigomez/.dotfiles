@@ -91,6 +91,10 @@ echo "🔗 Linking Ghostty config..."
 mkdir -p "$HOME/Library/Application Support/com.mitchellh.ghostty"
 ln -sf "$DOTFILES_DIR/ghostty/config" "$HOME/Library/Application Support/com.mitchellh.ghostty/config"
 
+# Step 7.5: Create symlink for Ghostty themes directory
+echo "🔗 Linking Ghostty themes..."
+ln -sf "$DOTFILES_DIR/ghostty/themes" "$HOME/Library/Application Support/com.mitchellh.ghostty/themes"
+
 echo ""
 echo "✅ Dotfiles bootstrapped successfully!"
 echo ""
