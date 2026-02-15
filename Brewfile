@@ -1,6 +1,7 @@
 tap "oven-sh/bun"
 brew "fnm"
 brew "git"
+brew "neovim"
 brew "opencode"
 brew "stow"
 brew "zsh"
