@@ -49,5 +49,5 @@
 # resize-overlay-duration = 4s 200ms
 
 # Theme and appearance
-theme = everforest-dark
-background-opacity = 0.8
+theme = Catppuccin Macchiato
+background-opacity = 0.9
