@@ -51,3 +51,4 @@
 # Theme and appearance
 theme = Catppuccin Macchiato
 background-opacity = 0.9
+font-size = 16
