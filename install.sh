@@ -72,27 +72,42 @@ if command -v fnm &> /dev/null; then
     echo "✓ LTS Node.js ($FNM_LTS) installed and set as default"
 fi
 
-# Step 4: Install oh-my-zsh if not already installed
+# --- oh-my-zsh ---
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
     echo "📦 Installing oh-my-zsh..."
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    if [ "$VERBOSE" = true ]; then
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended --keep-zshrc
+    else
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended --keep-zshrc 2>/dev/null
+    fi
+    echo "✓ oh-my-zsh installed"
 else
     echo "✓ oh-my-zsh is already installed"
 fi
 
-# Step 5: Install oh-my-zsh plugins
+# --- oh-my-zsh plugins ---
 ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
 
 if [ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]; then
     echo "📦 Installing zsh-autosuggestions plugin..."
-    git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
+    if [ "$VERBOSE" = true ]; then
+        git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
+    else
+        git clone --quiet https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions" 2>/dev/null
+    fi
+    echo "✓ zsh-autosuggestions installed"
 else
     echo "✓ zsh-autosuggestions is already installed"
 fi
 
 if [ ! -d "$ZSH_CUSTOM/themes/powerlevel10k" ]; then
     echo "📦 Installing powerlevel10k theme..."
-    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$ZSH_CUSTOM/themes/powerlevel10k"
+    if [ "$VERBOSE" = true ]; then
+        git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$ZSH_CUSTOM/themes/powerlevel10k"
+    else
+        git clone --quiet --depth=1 https://github.com/romkatv/powerlevel10k.git "$ZSH_CUSTOM/themes/powerlevel10k" 2>/dev/null
+    fi
+    echo "✓ powerlevel10k installed"
 else
     echo "✓ powerlevel10k is already installed"
 fi
