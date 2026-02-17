@@ -2,12 +2,21 @@
 
 set -e
 
-echo "🚀 Bootstrapping dotfiles..."
+# Parse arguments
+VERBOSE=false
+for arg in "$@"; do
+    case $arg in
+        --verbose|-v) VERBOSE=true ;;
+    esac
+done
 
 DOTFILES_DIR="$HOME/.dotfiles"
 cd "$DOTFILES_DIR"
 
-# Step 0: Install Xcode Command Line Tools if needed
+echo "🚀 Bootstrapping dotfiles..."
+echo ""
+
+# --- Xcode CLT ---
 if ! xcode-select -p &> /dev/null; then
     echo "⚠️  Xcode Command Line Tools not found"
     echo "📦 Installing Xcode Command Line Tools..."
@@ -24,7 +33,7 @@ else
     echo "✓ Xcode Command Line Tools already installed"
 fi
 
-# Step 1: Install Homebrew if needed
+# --- Homebrew ---
 if ! command -v brew &> /dev/null; then
     echo "📦 Installing Homebrew..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -35,7 +44,7 @@ fi
 # Ensure brew is in PATH (needed on Apple Silicon after fresh install)
 eval "$(/opt/homebrew/bin/brew shellenv)" 2>/dev/null || eval "$(/usr/local/bin/brew shellenv)" 2>/dev/null || true
 
-# Step 2: Ensure stow is installed
+# --- Stow ---
 if ! command -v stow &> /dev/null; then
     echo "📦 Installing GNU Stow..."
     brew install stow
@@ -43,9 +52,14 @@ else
     echo "✓ GNU Stow is already installed"
 fi
 
-# Step 3: Run brew bundle to install packages
+# --- brew bundle ---
 echo "📦 Installing packages from Brewfile..."
-brew bundle install --file="$DOTFILES_DIR/Brewfile"
+if [ "$VERBOSE" = true ]; then
+    brew bundle install --file="$DOTFILES_DIR/Brewfile" --verbose
+else
+    brew bundle install --file="$DOTFILES_DIR/Brewfile" --quiet 2>/dev/null || brew bundle install --file="$DOTFILES_DIR/Brewfile"
+fi
+echo "✓ Brewfile dependencies installed"
 
 # Step 3.5: Install LTS Node.js via fnm
 if command -v fnm &> /dev/null; then
