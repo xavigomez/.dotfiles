@@ -61,12 +61,15 @@ else
 fi
 echo "✓ Brewfile dependencies installed"
 
-# Step 3.5: Install LTS Node.js via fnm
+# --- fnm ---
 if command -v fnm &> /dev/null; then
     echo "📦 Installing LTS Node.js via fnm..."
+    eval "$(fnm env)"
     fnm install --lts
-    fnm default lts
-    echo "✓ LTS Node.js installed and set as default"
+    # Get the LTS version from fnm ls (the one tagged as lts-latest)
+    FNM_LTS=$(fnm ls | grep lts-latest | awk '{print $2}')
+    fnm default "$FNM_LTS"
+    echo "✓ LTS Node.js ($FNM_LTS) installed and set as default"
 fi
 
 # Step 4: Install oh-my-zsh if not already installed
