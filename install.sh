@@ -112,20 +112,38 @@ else
     echo "✓ powerlevel10k is already installed"
 fi
 
-# Step 6: Run stow to create symlinks for managed dotfiles
-echo "🔗 Creating symlinks with stow..."
-stow -vv zsh
-stow -vv zed
-stow -vv nvim
+# --- Stow dotfiles ---
+STOW_PACKAGES=(zsh zed nvim)
 
-# Step 7: Create symlink for Ghostty config (manual, outside of stow)
+if [ "$VERBOSE" = true ]; then
+    STOW_FLAGS="--adopt --verbose=2"
+else
+    STOW_FLAGS="--adopt"
+fi
+
+echo ""
+echo "🔗 Creating symlinks with stow..."
+echo ""
+for pkg in "${STOW_PACKAGES[@]}"; do
+    printf "  → Linking %s..." "$pkg"
+    stow $STOW_FLAGS "$pkg"
+    echo " ✓"
+done
+
+# Restore any adopted files to ensure dotfiles repo is source of truth
+git -C "$DOTFILES_DIR" restore .
+echo "  ✓ Restored dotfiles to source of truth"
+
+# --- Ghostty ---
+echo ""
 echo "🔗 Linking Ghostty config..."
 mkdir -p "$HOME/Library/Application Support/com.mitchellh.ghostty"
-ln -sf "$DOTFILES_DIR/ghostty/config" "$HOME/Library/Application Support/com.mitchellh.ghostty/config"
+ln -sfn "$DOTFILES_DIR/ghostty/config" "$HOME/Library/Application Support/com.mitchellh.ghostty/config"
+echo "  ✓ Ghostty config linked"
 
-# Step 7.5: Create symlink for Ghostty themes directory
 echo "🔗 Linking Ghostty themes..."
-ln -sf "$DOTFILES_DIR/ghostty/themes" "$HOME/Library/Application Support/com.mitchellh.ghostty/themes"
+ln -sfn "$DOTFILES_DIR/ghostty/themes" "$HOME/Library/Application Support/com.mitchellh.ghostty/themes"
+echo "  ✓ Ghostty themes linked"
 
 echo ""
 echo "✅ Dotfiles bootstrapped successfully!"
