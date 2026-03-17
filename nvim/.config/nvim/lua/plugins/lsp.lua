@@ -4,7 +4,7 @@ return {
     "neovim/nvim-lspconfig",
     opts = {
       servers = {
-        tsserver = {
+        ts_ls = {
           settings = {
             typescript = {
               inlayHints = {
@@ -60,15 +60,22 @@ return {
 
   -- Prettier formatter
   {
-    "jose-elias-alvarez/null-ls.nvim",
-    opts = function(_, opts)
-      local null_ls = require("null-ls")
-      opts.sources = vim.list_extend(opts.sources or {}, {
-        null_ls.builtins.formatting.prettier.with({
-          extra_filetypes = { "svelte" },
-        }),
-      })
-    end,
+    "stevearc/conform.nvim",
+    opts = {
+      formatters_by_ft = {
+        javascript = { "prettier" },
+        javascriptreact = { "prettier" },
+        typescript = { "prettier" },
+        typescriptreact = { "prettier" },
+        css = { "prettier" },
+        html = { "prettier" },
+        json = { "prettier" },
+        jsonc = { "prettier" },
+        yaml = { "prettier" },
+        markdown = { "prettier" },
+        svelte = { "prettier" },
+      },
+    },
   },
 
   -- Additional filetypes
