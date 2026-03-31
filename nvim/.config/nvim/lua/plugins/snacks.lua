@@ -1,12 +1,15 @@
 return {
-  "folke/snacks.nvim",
-  opts = {
-    picker = {
-      sources = {
-        explorer = {
-          hidden = true, -- show dotfiles and dotfolders
-        },
-      },
-    },
-  },
+	"folke/snacks.nvim",
+	opts = {
+		picker = {
+			sources = {
+				explorer = {
+					hidden = true, -- <leader>e
+				},
+				files = {
+					hidden = true, -- <leader><leader>
+				},
+			},
+		},
+	},
 }
