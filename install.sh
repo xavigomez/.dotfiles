@@ -61,6 +61,13 @@ else
 fi
 echo "✓ Brewfile dependencies installed"
 
+# --- Rustup ---
+if [ -x "/opt/homebrew/opt/rustup/bin/rustup" ]; then
+  echo "📦 Installing stable Rust toolchain via rustup..."
+  /opt/homebrew/opt/rustup/bin/rustup default stable
+  echo "✓ Stable Rust toolchain installed"
+fi
+
 # --- fnm ---
 if command -v fnm &>/dev/null; then
   echo "📦 Installing LTS Node.js via fnm..."
