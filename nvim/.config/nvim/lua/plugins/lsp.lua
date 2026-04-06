@@ -40,6 +40,19 @@ return {
         cssls = {},
         -- JSON
         jsonls = {},
+        -- Rust
+        rust_analyzer = {
+          settings = {
+            ["rust-analyzer"] = {
+              checkOnSave = { command = "clippy" },
+              inlayHints = {
+                chainingHints = { enable = true },
+                parameterHints = { enable = true },
+                typeHints = { enable = true },
+              },
+            },
+          },
+        },
         -- Lua
         lua_ls = {
           settings = {
@@ -74,6 +87,7 @@ return {
         yaml = { "prettier" },
         markdown = { "prettier" },
         svelte = { "prettier" },
+        rust = { "rustfmt" },
       },
     },
   },
@@ -92,6 +106,7 @@ return {
         "jsonc",
         "lua",
         "html",
+        "rust",
       })
     end,
   },
