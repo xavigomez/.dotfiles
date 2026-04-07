@@ -1,4 +1,6 @@
 tap "oven-sh/bun"
+
+brew "rustup
 brew "fnm"
 brew "git"
 brew "neovim"
@@ -7,6 +9,7 @@ brew "stow"
 brew "zsh"
 brew "lazygit"
 brew "oven-sh/bun/bun"
+
 cask "1password"
 cask "ghostty"
 cask "rectangle"
@@ -14,4 +17,4 @@ cask "whatsapp"
 cask "zed"
 cask "zen"
 cask "claude-code"
-cask "rustup"
+
