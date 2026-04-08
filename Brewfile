@@ -9,6 +9,7 @@ brew "stow"
 brew "tmux"
 brew "zsh"
 brew "lazygit"
+brew "spotify_player"
 brew "oven-sh/bun/bun"
 
 cask "1password"
