@@ -1,6 +1,6 @@
 tap "oven-sh/bun"
 
-brew "rustup
+brew "rustup"
 brew "fnm"
 brew "git"
 brew "neovim"
