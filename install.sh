@@ -120,7 +120,7 @@ else
 fi
 
 # --- Stow dotfiles ---
-STOW_PACKAGES=(zsh zed nvim claude)
+STOW_PACKAGES=(zsh zed nvim claude tmux)
 
 if [ "$VERBOSE" = true ]; then
   STOW_FLAGS="--adopt --verbose=2"
