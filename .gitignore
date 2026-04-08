@@ -27,3 +27,8 @@ npm-debug.log
 # Environment
 .env
 .env.local
+
+# spotify-player (real config has client_id, only example is versioned)
+spotify-player/.config/spotify-player/app.toml
+spotify-player/.config/spotify-player/.cache/
+spotify-player/.config/spotify-player/credentials.json

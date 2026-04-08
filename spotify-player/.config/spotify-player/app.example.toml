@@ -1,0 +1,16 @@
+# spotify-player configuration
+# Docs: https://github.com/aome510/spotify-player
+
+[client]
+# 1. Go to https://developer.spotify.com/dashboard and create an app
+# 2. Set redirect URI to: http://127.0.0.1:8080/callback (localhost is not accepted)
+# 3. Enable the "Web API" checkbox
+# 4. Copy the Client ID and paste it below
+client_id = "YOUR_CLIENT_ID_HERE"
+
+[device]
+name = "spotify-player"
+device_type = "computer"
+volume = 70
+bitrate = 320
+audio_cache = false

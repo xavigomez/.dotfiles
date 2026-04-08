@@ -120,7 +120,7 @@ else
 fi
 
 # --- Stow dotfiles ---
-STOW_PACKAGES=(zsh zed nvim claude tmux)
+STOW_PACKAGES=(zsh zed nvim claude tmux spotify-player)
 
 if [ "$VERBOSE" = true ]; then
   STOW_FLAGS="--adopt --verbose=2"
@@ -141,6 +141,14 @@ done
 git -C "$DOTFILES_DIR" restore .
 echo "  ✓ Restored dotfiles to source of truth"
 
+# --- spotify-player config from example ---
+SPOTIFY_CONFIG="$HOME/.config/spotify-player/app.toml"
+SPOTIFY_EXAMPLE="$HOME/.config/spotify-player/app.example.toml"
+if [ ! -f "$SPOTIFY_CONFIG" ] && [ -f "$SPOTIFY_EXAMPLE" ]; then
+  cp "$SPOTIFY_EXAMPLE" "$SPOTIFY_CONFIG"
+  echo "  ✓ Created spotify-player config from example (edit app.toml to add your client_id)"
+fi
+
 # --- Ghostty ---
 echo ""
 echo "🔗 Linking Ghostty config..."
@@ -159,4 +167,5 @@ echo "📝 Next steps:"
 echo "   1. Restart your terminal or run: source ~/.zshrc"
 echo "   2. Configure powerlevel10k if needed: p10k configure"
 echo "   3. When ready to add nvim+LazyVim, run: nvim"
+echo "   4. Set up Spotify: cp ~/.config/spotify-player/app.example.toml ~/.config/spotify-player/app.toml, add your client_id, then run: spotify_player"
 echo ""
