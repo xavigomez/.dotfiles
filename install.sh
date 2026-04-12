@@ -65,6 +65,7 @@ echo "✓ Brewfile dependencies installed"
 if [ -x "/opt/homebrew/opt/rustup/bin/rustup" ]; then
   echo "📦 Installing stable Rust toolchain via rustup..."
   /opt/homebrew/opt/rustup/bin/rustup default stable
+  /opt/homebrew/opt/rustup/bin/rustup component add rust-analyzer rust-src
   echo "✓ Stable Rust toolchain installed"
 fi
 
