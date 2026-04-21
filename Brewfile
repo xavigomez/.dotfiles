@@ -14,6 +14,7 @@ brew "oven-sh/bun/bun"
 
 cask "1password"
 cask "ghostty"
+cask "keka"
 cask "rectangle"
 cask "whatsapp"
 cask "zed"
