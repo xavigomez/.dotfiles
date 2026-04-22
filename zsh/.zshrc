@@ -17,6 +17,10 @@ fi
 
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
+
+# Homebrew — must come before oh-my-zsh so brew-installed tools take precedence
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
 export PATH="/opt/homebrew/opt/rustup/bin:$PATH"
 
 # Path to your Oh My Zsh installation.
