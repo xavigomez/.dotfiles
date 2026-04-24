@@ -4,32 +4,6 @@ return {
     "neovim/nvim-lspconfig",
     opts = {
       servers = {
-        ts_ls = {
-          settings = {
-            typescript = {
-              inlayHints = {
-                includeInlayParameterNameHints = "all",
-                includeInlayParameterNameHintsWhenArgumentMatchesName = false,
-                includeInlayFunctionParameterTypeHints = true,
-                includeInlayVariableTypeHints = true,
-                includeInlayPropertyDeclarationTypeHints = true,
-                includeInlayFunctionLikeReturnTypeHints = true,
-                includeInlayEnumMemberValueHints = true,
-              },
-            },
-            javascript = {
-              inlayHints = {
-                includeInlayParameterNameHints = "all",
-                includeInlayParameterNameHintsWhenArgumentMatchesName = false,
-                includeInlayFunctionParameterTypeHints = true,
-                includeInlayVariableTypeHints = true,
-                includeInlayPropertyDeclarationTypeHints = true,
-                includeInlayFunctionLikeReturnTypeHints = true,
-                includeInlayEnumMemberValueHints = true,
-              },
-            },
-          },
-        },
         -- ESLint
         eslint = {
           settings = {
@@ -38,8 +12,6 @@ return {
         },
         -- CSS
         cssls = {},
-        -- JSON
-        jsonls = {},
         -- Lua
         lua_ls = {
           settings = {
