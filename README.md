@@ -9,7 +9,7 @@ My personal dotfiles managed with GNU Stow.
 ├── zsh/              # Zsh + Oh My Zsh + Powerlevel10k config
 ├── zed/              # Zed editor settings and keybindings
 ├── ghostty/          # Ghostty terminal emulator config
-├── nvim/             # Neovim + LazyVim setup (future)
+├── nvim/             # Neovim + LazyVim setup
 ├── Brewfile          # Homebrew packages and casks
 ├── install.sh        # Bootstrap script
 ├── .gitignore        # Git ignore patterns
@@ -168,15 +168,17 @@ git commit -m "add <package> to Brewfile"
 
 The next person (or you on a new machine) can run `brew bundle install` to get everything.
 
-## Setting up LazyVim (future)
+## LazyVim Setup
 
-When you're ready to add Neovim:
+Neovim is configured with LazyVim and the following extras:
 
-1. Install Neovim: `brew install neovim` (update Brewfile)
-2. Run the LazyVim installer: `nvim`
-3. Move `~/.config/nvim` to `~/.dotfiles/nvim/.config/nvim`
-4. Run `cd ~/.dotfiles && stow nvim` to create symlink
-5. Commit the changes
+- **lang.rust** — Rust language support
+- **lang.tailwind** — Tailwind CSS class autocomplete and color previews
+- **lang.typescript** — TypeScript via vtsls with code actions
+- **lang.json** — JSON with SchemaStore validation (tsconfig, package.json, etc.)
+- **coding.emmet** — HTML/JSX abbreviation expansion
+
+Custom LSP servers (ESLint, CSS, Lua) and Prettier formatting are configured in `lua/plugins/lsp.lua`.
 
 ## Quick Reference
 
