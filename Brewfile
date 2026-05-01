@@ -11,6 +11,7 @@ brew "zsh"
 brew "lazygit"
 brew "spotify_player"
 brew "oven-sh/bun/bun"
+brew "pi-coding-agent"
 
 cask "1password"
 cask "ghostty"
