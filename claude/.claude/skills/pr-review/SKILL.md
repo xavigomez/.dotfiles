@@ -2,8 +2,8 @@
 name: pr-review
 description: >
   Conduct a staff-level code review of the current branch's changes vs the base branch.
-  Produces feedback using conventional comments format (issue, nitpick, question, praise).
-  Focuses on bugs, convention violations, performance, and security.
+  Returns a short bullet list of MAIN issues only — no nitpicks, no praise, no "non-blocking" caveats.
+  After the list, drills into each issue one at a time, waiting for the user between each.
 ---
 
 # PR Review
@@ -36,62 +36,73 @@ base=$(git merge-base HEAD main 2>/dev/null || git merge-base HEAD master 2>/dev
 
 4. Read the full content of each changed file to understand context beyond the diff.
 5. Read any CLAUDE.md files in the repo root and `.claude/` directory to learn project-specific conventions.
+6. Read related files the diff touches transitively: helpers/utilities the changed code calls, callers of changed exports, and any skill/rule files referenced by `.claude/skills/`. The goal is to evaluate the change in the context of the system, not in isolation.
 
 ## Review process
 
-Analyze the changes with these lenses:
+Be extra thorough. The output is short — that means the analysis behind it has to be deep, not lazy. Skim once for orientation, then go through each changed file deliberately with these lenses:
 
 ### Correctness
-- Logic errors, off-by-one, null/undefined risks
-- Missing error handling at system boundaries
-- Race conditions or state management issues
+- Logic errors, off-by-one, null/undefined risks, type-coercion surprises (e.g. `String(null)` becoming `"null"`).
+- Missing error handling at system boundaries (network, parse, user input).
+- Race conditions, ordering assumptions, double-firing, missed cleanup.
+- Comments or docstrings that contradict the code — these mislead future maintainers and count as real issues.
 
-### Conventions
-- Does the code follow patterns established in CLAUDE.md and the rest of the codebase?
-- Import ordering, naming, file organization
-- Are existing utilities reused instead of reinvented?
+### Architecture & conventions
+- Violations of patterns established in CLAUDE.md, project skills (`.claude/skills/*/rules/*.md`), and the rest of the codebase.
+- Reinventing utilities that already exist; abstractions added "just in case" with no second caller; layering breaks (e.g. importing client-only code from a server module).
+- Public API shape: prop names, exported types, event/action names that will be painful to rename later.
 
 ### Performance
-- Unnecessary re-renders, missing memoization where it matters
-- N+1 queries, unbounded lists, missing pagination
-- Bundle size impact (large new dependencies)
+- N+1 queries, unbounded lists, missing pagination, blocking I/O on the render path.
+- Bundle-size impact: large new dependencies, accidental client-bundling of server-only code.
+- Re-render hot paths: missing memoization where it actually matters (not speculative).
 
 ### Security
-- Injection risks (XSS, SQL, command)
-- Sensitive data exposure
-- Auth/authz gaps
+- Injection risks (XSS, SQL, command, prototype pollution).
+- Sensitive data exposure: PII, credentials, tokens, payment-card data leaking into logs/analytics/URLs.
+- Auth/authz gaps, missing CSRF/SSRF defenses, unsafe redirects, weakened crypto.
 
-### What NOT to flag
-- Pre-existing issues not introduced by this PR
-- Style preferences not backed by project conventions
-- Hypothetical future problems ("what if someone later...")
+### What does NOT make the list
+The output is for the **author at the keyboard**, not a thoroughness performance. Filter out:
+
+- **Nitpicks** — naming, comment wording, formatting, "consider renaming the variable", "spell out the acronym".
+- **Praise** — what was done well.
+- **Style preferences** not backed by a written convention.
+- **Hypothetical future problems** ("what if someone later adds a child that…").
+- **Pre-existing issues** the PR did not introduce. Mention them only if the PR makes them materially worse.
+- **"Non-blocking" caveats, suggestions, questions, thoughts** — if it isn't a real issue worth fixing, drop it. If you find yourself softening a finding with "minor" or "trivial", that's a sign it shouldn't be on the list at all.
+
+The bar: would a staff engineer block-or-fix on this before merge? If no, leave it out.
 
 ## Output format
 
-Use **conventional comments** for each finding. Valid labels:
+### Step 1: Bullet list only
 
-- **praise:** -- something done well
-- **issue:** -- a problem that should be fixed (add `(blocking)` or `(non-blocking)`)
-- **nitpick:** -- trivial preference, take it or leave it
-- **question:** -- something you don't understand or want clarified
-- **suggestion:** -- an alternative approach worth considering
-- **thought:** -- an observation that doesn't require action
+Output ONLY a short bullet list of the main issues. One line per issue. Each bullet is a short, specific noun phrase that names the problem and points at the file. No labels, no severity tags, no preamble, no closing summary.
 
-Format each comment as:
+Format:
 
 ```
-### filename.ext
-
-**label: Short summary**
-
-L12-25: Detailed explanation of the finding.
-Include code suggestions when relevant.
+- <Short problem statement> — `path/to/file.ext:Lline`
+- <Short problem statement> — `path/to/file.ext:Lline`
 ```
 
-## Structure the review as
+Then end with exactly one line:
 
-1. **One-line overall impression** (e.g. "Clean change, two issues to address before merge")
-2. **Findings** grouped by file, using conventional comments
-3. **Pre-existing issues** -- brief list of things noticed but NOT introduced by this PR (keep short)
+```
+Say "go" and I'll walk through them one at a time.
+```
 
-Wrap the entire review output in a markdown code block so the user can copy-paste it directly.
+If there are no real issues, say so in one sentence and stop. Do not pad.
+
+### Step 2: Drilldown (only after the user says go)
+
+When the user signals to continue ("go", "ok", "next", "first one", etc.), discuss issues one at a time:
+
+- Pick the first unaddressed issue from the list.
+- Explain it in a few sentences: what's wrong, why it matters, where exactly (file + lines), and a concrete suggested fix or two.
+- Stop. Wait for the user to respond — they may want to discuss, push back, ask for an alternative, or move on.
+- When they signal continue, move to the next issue.
+
+Do NOT dump all the details up front. Do NOT batch multiple issues into one message during drilldown. The whole point is one-at-a-time so the user can think about each one without a wall of text.
