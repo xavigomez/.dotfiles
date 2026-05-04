@@ -22,16 +22,16 @@ git rev-parse --abbrev-ref HEAD
 git log --oneline --merges -1 --format=%P HEAD | head -1 || echo "main"
 ```
 
-2. Read the PR diff:
+2. Read the PR diff (try `main` first, fall back to `master`):
 
 ```!
-base=$(git merge-base HEAD main 2>/dev/null || git merge-base HEAD master 2>/dev/null) && git diff "$base"...HEAD
+git diff main...HEAD 2>/dev/null || git diff master...HEAD
 ```
 
 3. List changed files:
 
 ```!
-base=$(git merge-base HEAD main 2>/dev/null || git merge-base HEAD master 2>/dev/null) && git diff "$base"...HEAD --name-only
+git diff main...HEAD --name-only 2>/dev/null || git diff master...HEAD --name-only
 ```
 
 4. Read the full content of each changed file to understand context beyond the diff.
