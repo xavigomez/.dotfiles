@@ -1,3 +1,4 @@
 {
-  "editorMode": "vim"
+  "editorMode": "vim",
+  "theme": "dark-ansi"
 }
