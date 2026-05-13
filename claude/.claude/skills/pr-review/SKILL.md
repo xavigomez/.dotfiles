@@ -79,13 +79,18 @@ The bar: would a staff engineer block-or-fix on this before merge? If no, leave 
 
 ### Step 1: Bullet list only
 
-Output ONLY a short bullet list of the main issues. One line per issue. Each bullet is a short, specific noun phrase that names the problem and points at the file. No labels, no severity tags, no preamble, no closing summary.
+Output ONLY a short bullet list of the main issues. One line per issue. Each bullet is a short, specific noun phrase that names the problem. No preamble, no closing summary.
+
+Use [Conventional Comments](https://conventionalcomments.org/) labels. Because the filter only lets blocking findings through, the decoration is always `(blocking)` and the label is almost always `issue`. Use `todo` when the bullet is a concrete missing action the author must add, or `question` when the bullet is a load-bearing ambiguity the author must answer before merge. Do not use `suggestion`, `nitpick`, `praise`, `thought`, `polish`, or `quibble` — those are non-blocking by definition and the filter excludes them.
+
+These bullets are written to be pasted as inline GitHub PR review comments, which are already anchored to a specific file and line. Do NOT include file paths or line numbers in the bullet — GitHub already shows that context. Just the label and the problem statement.
 
 Format:
 
 ```
-- <Short problem statement> — `path/to/file.ext:Lline`
-- <Short problem statement> — `path/to/file.ext:Lline`
+- **issue (blocking):** <Short problem statement>
+- **todo (blocking):** <Short problem statement>
+- **question (blocking):** <Short problem statement>
 ```
 
 Then end with exactly one line:
@@ -101,7 +106,9 @@ If there are no real issues, say so in one sentence and stop. Do not pad.
 When the user signals to continue ("go", "ok", "next", "first one", etc.), discuss issues one at a time:
 
 - Pick the first unaddressed issue from the list.
-- Explain it in a few sentences: what's wrong, why it matters, where exactly (file + lines), and a concrete suggested fix or two.
+- Open with the same Conventional Comments header used in the bullet list (`**issue (blocking):** <subject>`). Do NOT number the issues or substitute the label with `1.`, `2.`, etc.
+- Immediately under the header, on its own line, give the single file + line range the comment is headed for, in IDE-style `path/to/file.ext:18` or `path/to/file.ext:18-29` form. One reference per drilldown — do not sprinkle the path through the prose.
+- Below that, explain in a few sentences: what's wrong, why it matters, and a concrete suggested fix or two. Refer to symbols/lines by name in the prose; do not repeat the file path.
 - Stop. Wait for the user to respond — they may want to discuss, push back, ask for an alternative, or move on.
 - When they signal continue, move to the next issue.
 
