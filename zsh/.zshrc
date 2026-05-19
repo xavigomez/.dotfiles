@@ -2,9 +2,9 @@
 #  Auto-start tmux
 # ---------------------------------------------------------------------------
 #  - Won't nest (skips if already inside tmux)
-#  - Skips inside VS Code, Emacs, or non-interactive shells
+#  - Skips inside VS Code, Zed, Emacs, or non-interactive shells
 #  - Each tab gets its own session with a unique name
-if command -v tmux &>/dev/null && [[ -z "$TMUX" ]] && [[ "$TERM_PROGRAM" != "vscode" ]] && [[ -z "$INSIDE_EMACS" ]] && [[ -o interactive ]]; then
+if command -v tmux &>/dev/null && [[ -z "$TMUX" ]] && [[ "$TERM_PROGRAM" != "vscode" ]] && [[ "$TERM_PROGRAM" != "zed" ]] && [[ -z "$INSIDE_EMACS" ]] && [[ -o interactive ]]; then
   tmux new-session -s "tab-$$"
 fi
 
