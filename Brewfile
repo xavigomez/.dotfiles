@@ -2,6 +2,7 @@ tap "oven-sh/bun"
 
 brew "rustup"
 brew "fnm"
+brew "fzf"
 brew "git"
 brew "neovim"
 brew "opencode"
