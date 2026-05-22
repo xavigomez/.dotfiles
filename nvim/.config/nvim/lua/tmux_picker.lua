@@ -86,6 +86,31 @@ local function write_choice(action, name)
   vim.fn.writefile({ action .. ":" .. name }, out_file)
 end
 
+-- Close every Ghostty tab whose title matches `name` (tmux's set-titles makes
+-- the tab title equal the session name, so this finds the tabs that were
+-- attached to the just-killed session).
+local function close_ghostty_tabs_by_name(name)
+  local script = [[
+on run argv
+  set target_name to item 1 of argv
+  tell application "Ghostty"
+    set doomed to {}
+    repeat with w in windows
+      repeat with t in tabs of w
+        if name of t is target_name then
+          set end of doomed to t
+        end if
+      end repeat
+    end repeat
+    repeat with t in doomed
+      tell t to close tab
+    end repeat
+  end tell
+end run
+]]
+  vim.fn.system({ "osascript", "-", name }, script)
+end
+
 local sessions  -- forward-declared; reassigned after render-on-init and on refresh
 
 local function current_session()
@@ -235,7 +260,9 @@ end, "Create new session")
 map("d", function()
   local s = current_session()
   if not s then return end
-  vim.fn.system({ "tmux", "kill-session", "-t", s.name })
+  local name, was_attached = s.name, s.attached
+  vim.fn.system({ "tmux", "kill-session", "-t", name })
+  if was_attached then close_ghostty_tabs_by_name(name) end
   sessions = list_sessions()
   render(buf, sessions)
   apply_geometry(compute_geometry(#sessions))
