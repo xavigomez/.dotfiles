@@ -14,6 +14,34 @@ if command -v tmux &>/dev/null && command -v nvim &>/dev/null && [[ -z "$TMUX" ]
     case "$_tmux_choice" in
       attach:*) tmux attach -t "${_tmux_choice#attach:}" ;;
       new:*) tmux new-session -s "${_tmux_choice#new:}" ;;
+      focus:*)
+        _target="${_tmux_choice#focus:}"
+        _found=$(osascript - "$_target" 2>/dev/null <<'APPLESCRIPT'
+on run argv
+  set target_name to item 1 of argv
+  tell application "Ghostty"
+    activate
+    repeat with w in windows
+      repeat with t in tabs of w
+        if name of t is target_name then
+          tell w to activate window
+          tell t to select tab
+          return "found"
+        end if
+      end repeat
+    end repeat
+    return "not_found"
+  end tell
+end run
+APPLESCRIPT
+)
+        if [[ "$_found" == "found" ]]; then
+          exit
+        else
+          tmux attach -t "$_target"
+        fi
+        unset _target _found
+        ;;
     esac
   fi
   unset _tmux_out _tmux_choice _tmux_picker

@@ -32,9 +32,18 @@ vim.api.nvim_set_hl(0, "FloatTitle",  { bg = float_bg, fg = "#8aadf4", bold = tr
 vim.api.nvim_set_hl(0, "FloatFooter", { bg = float_bg, fg = "#8aadf4" })
 
 local function list_sessions()
-  local lines = vim.fn.systemlist("tmux list-sessions -F '#S' 2>/dev/null")
-  if vim.v.shell_error ~= 0 then lines = {} end
-  return lines
+  local names = vim.fn.systemlist("tmux list-sessions -F '#S' 2>/dev/null")
+  if vim.v.shell_error ~= 0 then names = {} end
+  local attached = {}
+  local clients = vim.fn.systemlist("tmux list-clients -F '#S' 2>/dev/null")
+  if vim.v.shell_error == 0 then
+    for _, name in ipairs(clients) do attached[name] = true end
+  end
+  local result = {}
+  for _, name in ipairs(names) do
+    table.insert(result, { name = name, attached = attached[name] == true })
+  end
+  return result
 end
 
 local function render(buf, sessions)
@@ -44,7 +53,12 @@ local function render(buf, sessions)
       "  (no sessions — press n to create one, q to quit)",
     })
   else
-    vim.api.nvim_buf_set_lines(buf, 0, -1, false, sessions)
+    local lines = {}
+    for _, s in ipairs(sessions) do
+      local prefix = s.attached and "● " or "  "
+      table.insert(lines, prefix .. s.name)
+    end
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
   end
   vim.bo[buf].modifiable = false
 end
@@ -53,10 +67,12 @@ local function write_choice(action, name)
   vim.fn.writefile({ action .. ":" .. name }, out_file)
 end
 
+local sessions  -- forward-declared; reassigned after render-on-init and on refresh
+
 local function current_session()
-  local line = vim.api.nvim_get_current_line()
-  if line:match("^%s*%(") then return nil end
-  return line
+  if not sessions or #sessions == 0 then return nil end
+  local lnum = vim.api.nvim_win_get_cursor(0)[1]
+  return sessions[lnum]
 end
 
 -- Blank out the main window so the float feels like the whole UI
@@ -72,7 +88,7 @@ vim.bo[buf].bufhidden = "hide"  -- keep alive while we swap to/from the prompt
 vim.bo[buf].swapfile = false
 vim.api.nvim_buf_set_name(buf, "tmux-sessions")
 
-local sessions = list_sessions()
+sessions = list_sessions()
 render(buf, sessions)
 
 local ui = vim.api.nvim_list_uis()[1]
@@ -122,7 +138,7 @@ local win = vim.api.nvim_open_win(buf, true, {
   border = "rounded",
   title = " tmux sessions ",
   title_pos = "center",
-  footer = " <CR> attach · n new · d kill · q quit ",
+  footer = " <CR> go · F force · n new · d kill · q quit ",
   footer_pos = "center",
 })
 
@@ -138,9 +154,16 @@ end
 map("<CR>", function()
   local s = current_session()
   if not s then return end
-  write_choice("attach", s)
+  write_choice(s.attached and "focus" or "attach", s.name)
   vim.cmd("qa!")
-end, "Attach to session")
+end, "Attach or focus existing tab")
+
+map("F", function()
+  local s = current_session()
+  if not s then return end
+  write_choice("attach", s.name)
+  vim.cmd("qa!")
+end, "Force-attach in this tab (duplicate)")
 
 map("n", function()
   local prompt_buf = vim.api.nvim_create_buf(false, true)
@@ -157,7 +180,7 @@ map("n", function()
     vim.api.nvim_win_set_buf(win, buf)
     vim.api.nvim_win_set_config(win, {
       title = " tmux sessions ",
-      footer = " <CR> attach · n new · d kill · q quit ",
+      footer = " <CR> go · F force · n new · d kill · q quit ",
     })
   end, { buffer = prompt_buf, nowait = true })
 
@@ -172,8 +195,9 @@ end, "Create new session")
 map("d", function()
   local s = current_session()
   if not s then return end
-  vim.fn.system({ "tmux", "kill-session", "-t", s })
-  render(buf, list_sessions())
+  vim.fn.system({ "tmux", "kill-session", "-t", s.name })
+  sessions = list_sessions()
+  render(buf, sessions)
 end, "Kill session under cursor")
 
 map("q", function()
