@@ -14,6 +14,19 @@ if command -v tmux &>/dev/null && command -v nvim &>/dev/null && [[ -z "$TMUX" ]
     case "$_tmux_choice" in
       attach:*) tmux attach -t "${_tmux_choice#attach:}" ;;
       new:*) tmux new-session -s "${_tmux_choice#new:}" ;;
+      close:*|close)
+        osascript 2>/dev/null <<'APPLESCRIPT'
+tell application "Ghostty"
+  set w to front window
+  set current_idx to index of selected tab of w
+  if current_idx > 1 then
+    set prev_tab to item (current_idx - 1) of tabs of w
+    tell prev_tab to select tab
+  end if
+end tell
+APPLESCRIPT
+        exit
+        ;;
       focus:*)
         _target="${_tmux_choice#focus:}"
         _found=$(osascript - "$_target" 2>/dev/null <<'APPLESCRIPT'

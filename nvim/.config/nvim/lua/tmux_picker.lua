@@ -138,7 +138,7 @@ local win = vim.api.nvim_open_win(buf, true, {
   border = "rounded",
   title = " tmux sessions ",
   title_pos = "center",
-  footer = " <CR> go · F force · n new · d kill · q quit ",
+  footer = " <CR> go · F force · n new · d kill · q close · Q shell ",
   footer_pos = "center",
 })
 
@@ -180,7 +180,7 @@ map("n", function()
     vim.api.nvim_win_set_buf(win, buf)
     vim.api.nvim_win_set_config(win, {
       title = " tmux sessions ",
-      footer = " <CR> go · F force · n new · d kill · q quit ",
+      footer = " <CR> go · F force · n new · d kill · q close · Q shell ",
     })
   end, { buffer = prompt_buf, nowait = true })
 
@@ -201,5 +201,10 @@ map("d", function()
 end, "Kill session under cursor")
 
 map("q", function()
+  write_choice("close", "")
   vim.cmd("qa!")
-end, "Quit")
+end, "Close Ghostty tab")
+
+map("Q", function()
+  vim.cmd("qa!")
+end, "Drop to plain shell")
