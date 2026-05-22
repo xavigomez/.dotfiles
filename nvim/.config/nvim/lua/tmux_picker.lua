@@ -46,14 +46,15 @@ local picker_ns = vim.api.nvim_create_namespace("tmux_picker")
 local function list_sessions()
   local names = vim.fn.systemlist("tmux list-sessions -F '#S' 2>/dev/null")
   if vim.v.shell_error ~= 0 then names = {} end
-  local attached = {}
+  local counts = {}
   local clients = vim.fn.systemlist("tmux list-clients -F '#S' 2>/dev/null")
   if vim.v.shell_error == 0 then
-    for _, name in ipairs(clients) do attached[name] = true end
+    for _, name in ipairs(clients) do counts[name] = (counts[name] or 0) + 1 end
   end
   local result = {}
   for _, name in ipairs(names) do
-    table.insert(result, { name = name, attached = attached[name] == true })
+    local n = counts[name] or 0
+    table.insert(result, { name = name, attached = n > 0, count = n })
   end
   return result
 end
@@ -68,7 +69,8 @@ local function render(buf, sessions)
   else
     local lines = {}
     for _, s in ipairs(sessions) do
-      table.insert(lines, " ● " .. s.name)
+      local suffix = s.count >= 2 and (" (" .. s.count .. ")") or ""
+      table.insert(lines, " ● " .. s.name .. suffix)
     end
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
     for i, s in ipairs(sessions) do
@@ -84,6 +86,35 @@ end
 
 local function write_choice(action, name)
   vim.fn.writefile({ action .. ":" .. name }, out_file)
+end
+
+-- Keep the first Ghostty tab whose title matches `name` (in window/tab order)
+-- and close any duplicates.
+local function dedupe_ghostty_tabs_by_name(name)
+  local script = [[
+on run argv
+  set target_name to item 1 of argv
+  tell application "Ghostty"
+    set keeper to missing value
+    set doomed to {}
+    repeat with w in windows
+      repeat with t in tabs of w
+        if name of t is target_name then
+          if keeper is missing value then
+            set keeper to t
+          else
+            set end of doomed to t
+          end if
+        end if
+      end repeat
+    end repeat
+    repeat with t in doomed
+      tell t to close tab
+    end repeat
+  end tell
+end run
+]]
+  vim.fn.system({ "osascript", "-", name }, script)
 end
 
 -- Close every Ghostty tab whose title matches `name` (tmux's set-titles makes
@@ -143,7 +174,7 @@ local win, backdrop_win  -- forward-declared, assigned after compute_geometry
 
 local function compute_geometry(content_h)
   local ui = vim.api.nvim_list_uis()[1]
-  local w = math.min(60, ui.width - 4)
+  local w = math.min(70, ui.width - 4)
   local h = math.min(math.max(content_h, 1), 15)
   local popup_outer_w = w + 2
   local popup_outer_h = h + 2
@@ -201,7 +232,7 @@ win = vim.api.nvim_open_win(buf, true, {
   border = "rounded",
   title = " tmux sessions ",
   title_pos = "center",
-  footer = " <CR> go · F force · n new · d kill · q close · Q shell ",
+  footer = " <CR> go · F force · n new · d kill · D dedupe · q close · Q shell ",
   footer_pos = "center",
 })
 
@@ -244,7 +275,7 @@ map("n", function()
     apply_geometry(compute_geometry(#sessions))
     vim.api.nvim_win_set_config(win, {
       title = " tmux sessions ",
-      footer = " <CR> go · F force · n new · d kill · q close · Q shell ",
+      footer = " <CR> go · F force · n new · d kill · D dedupe · q close · Q shell ",
     })
   end, { buffer = prompt_buf, nowait = true })
 
@@ -267,6 +298,14 @@ map("d", function()
   render(buf, sessions)
   apply_geometry(compute_geometry(#sessions))
 end, "Kill session under cursor")
+
+map("D", function()
+  local s = current_session()
+  if not s or s.count < 2 then return end
+  dedupe_ghostty_tabs_by_name(s.name)
+  write_choice("focus", s.name)
+  vim.cmd("qa!")
+end, "Close duplicate tabs and jump to the keeper")
 
 map("q", function()
   write_choice("close", "")
