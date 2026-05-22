@@ -30,6 +30,18 @@ vim.api.nvim_set_hl(0, "NormalFloat", { bg = float_bg, fg = "#cad3f5" })
 vim.api.nvim_set_hl(0, "FloatBorder", { bg = float_bg, fg = "#8aadf4" })
 vim.api.nvim_set_hl(0, "FloatTitle",  { bg = float_bg, fg = "#8aadf4", bold = true })
 vim.api.nvim_set_hl(0, "FloatFooter", { bg = float_bg, fg = "#8aadf4" })
+vim.api.nvim_set_hl(0, "CursorLine",  { bg = "#363a4f" })  -- surface0
+
+-- Status indicators
+vim.api.nvim_set_hl(0, "TmuxPickerAttached", { fg = "#a6da95" })  -- green: open
+vim.api.nvim_set_hl(0, "TmuxPickerDetached", { fg = "#6e738d" })  -- overlay0: closed
+
+-- Hide the cursor block in normal mode; cursorline already marks the selection.
+-- Insert mode keeps the default cursor so the new-session prompt remains usable.
+vim.opt.guicursor = "n-v-c-sm:block-HiddenCursor,i-ci-ve:ver25-Cursor,r-cr-o:hor20-HiddenCursor"
+vim.api.nvim_set_hl(0, "HiddenCursor", { bg = "#363a4f", fg = "#cad3f5" })
+
+local picker_ns = vim.api.nvim_create_namespace("tmux_picker")
 
 local function list_sessions()
   local names = vim.fn.systemlist("tmux list-sessions -F '#S' 2>/dev/null")
@@ -48,6 +60,7 @@ end
 
 local function render(buf, sessions)
   vim.bo[buf].modifiable = true
+  vim.api.nvim_buf_clear_namespace(buf, picker_ns, 0, -1)
   if #sessions == 0 then
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
       "  (no sessions — press n to create one, q to quit)",
@@ -55,10 +68,16 @@ local function render(buf, sessions)
   else
     local lines = {}
     for _, s in ipairs(sessions) do
-      local prefix = s.attached and "● " or "  "
-      table.insert(lines, prefix .. s.name)
+      table.insert(lines, " ● " .. s.name)
     end
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+    for i, s in ipairs(sessions) do
+      local hl = s.attached and "TmuxPickerAttached" or "TmuxPickerDetached"
+      vim.api.nvim_buf_set_extmark(buf, picker_ns, i - 1, 1, {
+        end_col = 4,         -- "●" is 3 bytes in UTF-8
+        hl_group = hl,
+      })
+    end
   end
   vim.bo[buf].modifiable = false
 end
