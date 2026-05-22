@@ -110,36 +110,55 @@ vim.api.nvim_buf_set_name(buf, "tmux-sessions")
 sessions = list_sessions()
 render(buf, sessions)
 
-local ui = vim.api.nvim_list_uis()[1]
-local width = math.min(60, ui.width - 4)
-local height = math.min(math.max(#sessions, 1), 15)
+-- Geometry helper: positions the backdrop first (centered on screen) and the
+-- popup inside it, so the halo padding stays symmetric regardless of how nvim
+-- accounts for borders. Pass the popup's *content* height (number of rows).
+local pad_x, pad_y = 5, 3
+local win, backdrop_win  -- forward-declared, assigned after compute_geometry
 
--- Position by sizing the backdrop first, then placing the popup inside it.
--- This makes the popup's centering within the backdrop independent of how
--- nvim accounts for borders when interpreting `row`/`col`.
-local pad_x, pad_y = 5, 3                        -- halo around the popup, in cells
-local popup_outer_w = width + 2                  -- popup + its border
-local popup_outer_h = height + 2
-local backdrop_content_w = popup_outer_w + pad_x * 2
-local backdrop_content_h = popup_outer_h + pad_y * 2
-local backdrop_outer_w = backdrop_content_w + 2  -- + backdrop's own border
-local backdrop_outer_h = backdrop_content_h + 2
+local function compute_geometry(content_h)
+  local ui = vim.api.nvim_list_uis()[1]
+  local w = math.min(60, ui.width - 4)
+  local h = math.min(math.max(content_h, 1), 15)
+  local popup_outer_w = w + 2
+  local popup_outer_h = h + 2
+  local backdrop_w = popup_outer_w + pad_x * 2
+  local backdrop_h = popup_outer_h + pad_y * 2
+  local backdrop_outer_w = backdrop_w + 2
+  local backdrop_outer_h = backdrop_h + 2
+  local b_row = math.max(math.floor((ui.height - backdrop_outer_h) / 2), 0)
+  local b_col = math.max(math.floor((ui.width - backdrop_outer_w) / 2), 0)
+  return {
+    popup    = { width = w, height = h, row = b_row + 1 + pad_y, col = b_col + 1 + pad_x },
+    backdrop = { width = backdrop_w, height = backdrop_h, row = b_row, col = b_col },
+  }
+end
 
-local backdrop_row = math.max(math.floor((ui.height - backdrop_outer_h) / 2), 0)
-local backdrop_col = math.max(math.floor((ui.width - backdrop_outer_w) / 2), 0)
-local row = backdrop_row + 1 + pad_y             -- skip backdrop's top border + halo
-local col = backdrop_col + 1 + pad_x
+local function apply_geometry(g)
+  vim.api.nvim_win_set_config(win, {
+    relative = "editor",
+    width = g.popup.width, height = g.popup.height,
+    row = g.popup.row, col = g.popup.col,
+  })
+  vim.api.nvim_win_set_config(backdrop_win, {
+    relative = "editor",
+    width = g.backdrop.width, height = g.backdrop.height,
+    row = g.backdrop.row, col = g.backdrop.col,
+  })
+end
+
+local initial_g = compute_geometry(#sessions)
 
 local backdrop_buf = vim.api.nvim_create_buf(false, true)
 vim.bo[backdrop_buf].buftype = "nofile"
 vim.bo[backdrop_buf].bufhidden = "wipe"
 vim.api.nvim_set_hl(0, "TmuxPickerBackdrop", { bg = float_bg })
-local backdrop_win = vim.api.nvim_open_win(backdrop_buf, false, {
+backdrop_win = vim.api.nvim_open_win(backdrop_buf, false, {
   relative = "editor",
-  width = backdrop_content_w,
-  height = backdrop_content_h,
-  col = backdrop_col,
-  row = backdrop_row,
+  width = initial_g.backdrop.width,
+  height = initial_g.backdrop.height,
+  col = initial_g.backdrop.col,
+  row = initial_g.backdrop.row,
   style = "minimal",
   border = "rounded",
   focusable = false,
@@ -147,12 +166,12 @@ local backdrop_win = vim.api.nvim_open_win(backdrop_buf, false, {
 })
 vim.wo[backdrop_win].winhighlight = "Normal:TmuxPickerBackdrop,NormalNC:TmuxPickerBackdrop"
 
-local win = vim.api.nvim_open_win(buf, true, {
+win = vim.api.nvim_open_win(buf, true, {
   relative = "editor",
-  width = width,
-  height = height,
-  col = col,
-  row = row,
+  width = initial_g.popup.width,
+  height = initial_g.popup.height,
+  col = initial_g.popup.col,
+  row = initial_g.popup.row,
   style = "minimal",
   border = "rounded",
   title = " tmux sessions ",
@@ -197,6 +216,7 @@ map("n", function()
   vim.keymap.set({ "i", "n" }, "<Esc>", function()
     vim.cmd("stopinsert")
     vim.api.nvim_win_set_buf(win, buf)
+    apply_geometry(compute_geometry(#sessions))
     vim.api.nvim_win_set_config(win, {
       title = " tmux sessions ",
       footer = " <CR> go · F force · n new · d kill · q close · Q shell ",
@@ -204,6 +224,7 @@ map("n", function()
   end, { buffer = prompt_buf, nowait = true })
 
   vim.api.nvim_win_set_buf(win, prompt_buf)
+  apply_geometry(compute_geometry(1))  -- prompt only needs one row
   vim.api.nvim_win_set_config(win, {
     title = " new session ",
     footer = " <CR> confirm · <Esc> cancel ",
@@ -217,6 +238,7 @@ map("d", function()
   vim.fn.system({ "tmux", "kill-session", "-t", s.name })
   sessions = list_sessions()
   render(buf, sessions)
+  apply_geometry(compute_geometry(#sessions))
 end, "Kill session under cursor")
 
 map("q", function()
