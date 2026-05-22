@@ -68,7 +68,7 @@ vim.api.nvim_win_set_buf(0, bg_buf)
 -- Picker buffer
 local buf = vim.api.nvim_create_buf(false, true)
 vim.bo[buf].buftype = "nofile"
-vim.bo[buf].bufhidden = "wipe"
+vim.bo[buf].bufhidden = "hide"  -- keep alive while we swap to/from the prompt
 vim.bo[buf].swapfile = false
 vim.api.nvim_buf_set_name(buf, "tmux-sessions")
 
@@ -143,11 +143,30 @@ map("<CR>", function()
 end, "Attach to session")
 
 map("n", function()
-  vim.ui.input({ prompt = "New session name: " }, function(name)
-    if not name or name == "" then return end
-    write_choice("new", name)
+  local prompt_buf = vim.api.nvim_create_buf(false, true)
+  vim.bo[prompt_buf].buftype = "prompt"
+  vim.bo[prompt_buf].bufhidden = "wipe"
+  vim.fn.prompt_setprompt(prompt_buf, "session name › ")
+  vim.fn.prompt_setcallback(prompt_buf, function(text)
+    if text and text ~= "" then write_choice("new", text) end
     vim.cmd("qa!")
   end)
+
+  vim.keymap.set({ "i", "n" }, "<Esc>", function()
+    vim.cmd("stopinsert")
+    vim.api.nvim_win_set_buf(win, buf)
+    vim.api.nvim_win_set_config(win, {
+      title = " tmux sessions ",
+      footer = " <CR> attach · n new · d kill · q quit ",
+    })
+  end, { buffer = prompt_buf, nowait = true })
+
+  vim.api.nvim_win_set_buf(win, prompt_buf)
+  vim.api.nvim_win_set_config(win, {
+    title = " new session ",
+    footer = " <CR> confirm · <Esc> cancel ",
+  })
+  vim.cmd("startinsert")
 end, "Create new session")
 
 map("d", function()
