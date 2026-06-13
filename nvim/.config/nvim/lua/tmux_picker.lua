@@ -1,6 +1,7 @@
 -- tmux session picker. Run via `nvim --clean -c 'luafile <this>'`.
 -- Reads $TMUX_PICKER_OUT and writes one of:
---   attach:<name>   attach to existing
+--   attach:<name>   attach to existing live session
+--   resume:<name>   restore from the latest tmux-resurrect snapshot, then attach
 --   new:<name>      create new
 --   (empty file)    user quit; .zshrc drops to a plain shell
 
@@ -33,8 +34,9 @@ vim.api.nvim_set_hl(0, "FloatFooter", { bg = float_bg, fg = "#8aadf4" })
 vim.api.nvim_set_hl(0, "CursorLine",  { bg = "#363a4f" })  -- surface0
 
 -- Status indicators
-vim.api.nvim_set_hl(0, "TmuxPickerAttached", { fg = "#a6da95" })  -- green: open
-vim.api.nvim_set_hl(0, "TmuxPickerDetached", { fg = "#6e738d" })  -- overlay0: closed
+vim.api.nvim_set_hl(0, "TmuxPickerAttached", { fg = "#a6da95" })  -- green:  live, attached
+vim.api.nvim_set_hl(0, "TmuxPickerDetached", { fg = "#6e738d" })  -- overlay: live, detached
+vim.api.nvim_set_hl(0, "TmuxPickerResumable",{ fg = "#f5a97f" })  -- peach:  paused / resumable
 
 -- Hide the cursor block in normal mode; cursorline already marks the selection.
 -- Insert mode keeps the default cursor so the new-session prompt remains usable.
@@ -54,10 +56,54 @@ local function list_sessions()
   local result = {}
   for _, name in ipairs(names) do
     local n = counts[name] or 0
-    table.insert(result, { name = name, attached = n > 0, count = n })
+    table.insert(result, { kind = "live", name = name, attached = n > 0, count = n })
   end
   return result
 end
+
+-- Resurrect writes snapshots to ~/.tmux/resurrect if that dir exists, otherwise
+-- to ${XDG_DATA_HOME:-~/.local/share}/tmux/resurrect. `last` is a symlink to
+-- the most recent snapshot. Each pane line is tab-separated and starts with
+-- `pane<TAB><session_name><TAB>...`.
+local function resurrect_last_path()
+  local home = vim.env.HOME or ""
+  local legacy = home .. "/.tmux/resurrect"
+  if vim.fn.isdirectory(legacy) == 1 then return legacy .. "/last" end
+  local xdg = vim.env.XDG_DATA_HOME
+  if not xdg or xdg == "" then xdg = home .. "/.local/share" end
+  return xdg .. "/tmux/resurrect/last"
+end
+
+local function list_resumable(live_set)
+  local path = resurrect_last_path()
+  if vim.fn.filereadable(path) == 0 then return {} end
+  local seen, ordered = {}, {}
+  for _, line in ipairs(vim.fn.readfile(path)) do
+    local kind, sess = line:match("^([^\t]+)\t([^\t]+)")
+    if (kind == "pane" or kind == "window") and sess and not live_set[sess] and not seen[sess] then
+      seen[sess] = true
+      table.insert(ordered, { kind = "resumable", name = sess })
+    end
+  end
+  table.sort(ordered, function(a, b) return a.name < b.name end)
+  return ordered
+end
+
+local function build_entries()
+  local live = list_sessions()
+  local live_set = {}
+  for _, s in ipairs(live) do live_set[s.name] = true end
+  local resumable = list_resumable(live_set)
+  local merged = {}
+  for _, s in ipairs(live) do table.insert(merged, s) end
+  for _, s in ipairs(resumable) do table.insert(merged, s) end
+  return merged
+end
+
+-- Marker icons: "●" for live sessions, "◌" for resumable (paused/snapshot).
+-- Both are 3 bytes in UTF-8, so the extmark end_col is identical.
+local MARKER_LIVE     = "●"
+local MARKER_RESUMABLE = "◌"
 
 local function render(buf, sessions)
   vim.bo[buf].modifiable = true
@@ -69,14 +115,23 @@ local function render(buf, sessions)
   else
     local lines = {}
     for _, s in ipairs(sessions) do
-      local suffix = s.count >= 2 and (" (" .. s.count .. ")") or ""
-      table.insert(lines, " ● " .. s.name .. suffix)
+      if s.kind == "resumable" then
+        table.insert(lines, " " .. MARKER_RESUMABLE .. " " .. s.name)
+      else
+        local suffix = s.count >= 2 and (" (" .. s.count .. ")") or ""
+        table.insert(lines, " " .. MARKER_LIVE .. " " .. s.name .. suffix)
+      end
     end
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
     for i, s in ipairs(sessions) do
-      local hl = s.attached and "TmuxPickerAttached" or "TmuxPickerDetached"
+      local hl
+      if s.kind == "resumable" then
+        hl = "TmuxPickerResumable"
+      else
+        hl = s.attached and "TmuxPickerAttached" or "TmuxPickerDetached"
+      end
       vim.api.nvim_buf_set_extmark(buf, picker_ns, i - 1, 1, {
-        end_col = 4,         -- "●" is 3 bytes in UTF-8
+        end_col = 4,         -- 3-byte UTF-8 marker
         hl_group = hl,
       })
     end
@@ -163,7 +218,7 @@ vim.bo[buf].bufhidden = "hide"  -- keep alive while we swap to/from the prompt
 vim.bo[buf].swapfile = false
 vim.api.nvim_buf_set_name(buf, "tmux-sessions")
 
-sessions = list_sessions()
+sessions = build_entries()
 render(buf, sessions)
 
 -- Geometry helper: positions the backdrop first (centered on screen) and the
@@ -248,13 +303,17 @@ end
 map("<CR>", function()
   local s = current_session()
   if not s then return end
-  write_choice(s.attached and "focus" or "attach", s.name)
+  if s.kind == "resumable" then
+    write_choice("resume", s.name)
+  else
+    write_choice(s.attached and "focus" or "attach", s.name)
+  end
   vim.cmd("qa!")
-end, "Attach or focus existing tab")
+end, "Attach, focus, or resume entry under cursor")
 
 map("F", function()
   local s = current_session()
-  if not s then return end
+  if not s or s.kind == "resumable" then return end
   write_choice("attach", s.name)
   vim.cmd("qa!")
 end, "Force-attach in this tab (duplicate)")
@@ -290,18 +349,18 @@ end, "Create new session")
 
 map("d", function()
   local s = current_session()
-  if not s then return end
+  if not s or s.kind == "resumable" then return end
   local name, was_attached = s.name, s.attached
   vim.fn.system({ "tmux", "kill-session", "-t", name })
   if was_attached then close_ghostty_tabs_by_name(name) end
-  sessions = list_sessions()
+  sessions = build_entries()
   render(buf, sessions)
   apply_geometry(compute_geometry(#sessions))
 end, "Kill session under cursor")
 
 map("D", function()
   local s = current_session()
-  if not s or s.count < 2 then return end
+  if not s or s.kind == "resumable" or s.count < 2 then return end
   dedupe_ghostty_tabs_by_name(s.name)
   write_choice("focus", s.name)
   vim.cmd("qa!")

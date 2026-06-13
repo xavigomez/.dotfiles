@@ -14,6 +14,18 @@ if command -v tmux &>/dev/null && command -v nvim &>/dev/null && [[ -z "$TMUX" ]
     case "$_tmux_choice" in
       attach:*) tmux attach -t "${_tmux_choice#attach:}" ;;
       new:*) tmux new-session -s "${_tmux_choice#new:}" ;;
+      resume:*)
+        # Restore the latest tmux-resurrect snapshot, then attach to the picked
+        # session. resurrect's restore script needs a running tmux server, so
+        # bootstrap one with a throwaway session, run the restore inside it,
+        # then drop the bootstrap and attach to the real target.
+        _target="${_tmux_choice#resume:}"
+        tmux new-session -d -s __resurrect_bootstrap 2>/dev/null
+        tmux run-shell "$HOME/.tmux/plugins/tmux-resurrect/scripts/restore.sh"
+        tmux kill-session -t __resurrect_bootstrap 2>/dev/null
+        tmux attach -t "$_target"
+        unset _target
+        ;;
       close:*|close)
         osascript 2>/dev/null <<'APPLESCRIPT'
 tell application "Ghostty"
