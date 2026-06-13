@@ -1,6 +1,6 @@
 {
-  "lastChangelogVersion": "0.70.6",
-  "defaultProvider": "anthropic",
-  "defaultModel": "claude-opus-4-7",
-  "defaultThinkingLevel": "medium"
+  "lastChangelogVersion": "0.79.1",
+  "defaultProvider": "opencode-go",
+  "defaultModel": "opencode-go/deepseek-v4-pro",
+  "defaultThinkingLevel": "high"
 }
