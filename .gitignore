@@ -32,3 +32,9 @@ npm-debug.log
 spotify-player/.config/spotify-player/app.toml
 spotify-player/.config/spotify-player/.cache/
 spotify-player/.config/spotify-player/credentials.json
+
+# Tool-managed auth/credentials state — must never be tracked
+**/auth.json
+**/credentials.json
+**/.env
+**/.env.local
