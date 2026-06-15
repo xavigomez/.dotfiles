@@ -38,3 +38,7 @@ spotify-player/.config/spotify-player/credentials.json
 **/credentials.json
 **/.env
 **/.env.local
+
+# pi: everything under ~/.pi/agent/ is tool-managed (auth, runtime state,
+# downloaded binaries). Only pi/.pi/settings.json (skills config) is tracked.
+pi/.pi/agent/

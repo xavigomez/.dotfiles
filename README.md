@@ -136,6 +136,36 @@ Then move your config to `~/.dotfiles/myapp/config` and commit it.
 
 (This is exactly what we do with Ghostty — see the `install.sh` file.)
 
+### Tool-managed files and secrets
+
+Some apps (CLIs, agents, etc.) keep their own config directory and write their own state files there: auth tokens, runtime caches, downloaded binaries, version markers. Examples:
+
+- `~/.pi/agent/auth.json` — pi's auth token
+- `~/.pi/agent/settings.json` — pi's runtime state (last-used model, version)
+- `~/.pi/agent/bin/` — binaries pi downloads on demand
+- `~/.config/spotify-player/credentials.json` — spotify-player's OAuth state
+- anything matching `**/auth.json`, `**/credentials.json`, `**/.env*`
+
+**These must never be tracked in the repo.** They are per-machine or per-account (or both), and committing them has leaked secrets in this repo's history before. The current `.gitignore` blocks the common shapes — extend it whenever you onboard a new tool that writes secrets next to user-managed config.
+
+#### Onboarding a tool that mixes user config with tool state
+
+Some tools (like pi) keep user-managed config (`~/.pi/settings.json`) alongside tool-managed state (`~/.pi/agent/*`). Stow only the user-managed paths:
+
+```bash
+mkdir -p ~/.dotfiles/pi/.pi
+mv ~/.pi/settings.json ~/.dotfiles/pi/.pi/settings.json   # user-managed → tracked
+# do NOT move ~/.pi/agent/* into the repo — it's tool-managed
+echo 'pi/.pi/agent/' >> ~/.dotfiles/.gitignore            # belt-and-suspenders
+cd ~/.dotfiles && stow pi
+```
+
+If `git status` ever shows a tool-managed file, do **not** commit it. Untrack it with `git rm --cached <path>` and add the path to `.gitignore`.
+
+#### Why `install.sh` does not use `stow --adopt`
+
+`stow --adopt` moves whatever is in `$HOME` into the repo, replacing tracked files. That sounds convenient on a fresh machine but has bitten us: a tool wrote a live auth token to its config file, and the next `install.sh` silently adopted the token into the repo and a later commit pushed it. Without `--adopt`, stow aborts on conflict and you resolve it explicitly — back up the conflicting file and remove it before re-running.
+
 ### Removing a package
 
 If you want to remove a package from dotfiles but keep the config file:

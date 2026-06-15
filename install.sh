@@ -121,12 +121,15 @@ else
 fi
 
 # --- Stow dotfiles ---
+# No --adopt: it silently pulls whatever is in $HOME into the repo, which has
+# historically pulled live auth tokens into tracked files. If a conflict
+# happens, stow aborts the package and the user resolves it manually.
 STOW_PACKAGES=(zsh zed nvim claude tmux spotify-player pi)
 
 if [ "$VERBOSE" = true ]; then
-  STOW_FLAGS="--adopt --verbose=2"
+  STOW_FLAGS="--verbose=2"
 else
-  STOW_FLAGS="--adopt"
+  STOW_FLAGS=""
 fi
 
 echo ""
@@ -137,10 +140,6 @@ for pkg in "${STOW_PACKAGES[@]}"; do
   stow $STOW_FLAGS "$pkg"
   echo " ✓"
 done
-
-# Restore any adopted files to ensure dotfiles repo is source of truth
-git -C "$DOTFILES_DIR" restore .
-echo "  ✓ Restored dotfiles to source of truth"
 
 # --- spotify-player config from example ---
 SPOTIFY_CONFIG="$HOME/.config/spotify-player/app.toml"
