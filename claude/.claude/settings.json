@@ -1,4 +1,8 @@
 {
+  "model": "opus[1m]",
+  "effortLevel": "medium",
+  "skipWorkflowUsageWarning": true,
+  "theme": "dark-ansi",
   "editorMode": "vim",
-  "theme": "dark-ansi"
+  "tui": "fullscreen"
 }
