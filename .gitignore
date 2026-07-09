@@ -42,3 +42,9 @@ spotify-player/.config/spotify-player/credentials.json
 # pi: everything under ~/.pi/agent/ is tool-managed (auth, runtime state,
 # downloaded binaries). Only pi/.pi/settings.json (skills config) is tracked.
 pi/.pi/agent/
+
+# opencode: tool-managed install footprint lives in the same dir as the config
+opencode/.config/opencode/node_modules/
+opencode/.config/opencode/bun.lock
+opencode/.config/opencode/package.json
+opencode/.config/opencode/package-lock.json
