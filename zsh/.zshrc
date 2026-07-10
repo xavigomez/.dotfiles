@@ -195,6 +195,7 @@ eval "$(fnm env --use-on-cd)"
 alias zshconfig="zed ~/.zshrc"
 alias omzconfig="zed ~/.oh-my-zsh"
 alias ghosttyconfig="zed $HOME/Library/Application Support/com.mitchellh.ghostty/config"
+alias v="nvim"
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
