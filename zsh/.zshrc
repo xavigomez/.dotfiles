@@ -1,75 +1,14 @@
 # ---------------------------------------------------------------------------
-#  Auto-start tmux
+#  Auto-start herdr
 # ---------------------------------------------------------------------------
-#  - Won't nest (skips if already inside tmux)
+#  - Won't nest (skips if already inside herdr — HERDR_ENV=1)
 #  - Skips inside VS Code, Zed, Emacs, or non-interactive shells
-#  - Opens an nvim scratch buffer to attach, create, or quit to plain shell
-if command -v tmux &>/dev/null && command -v nvim &>/dev/null && [[ -z "$TMUX" ]] && [[ "$TERM_PROGRAM" != "vscode" ]] && [[ "$TERM_PROGRAM" != "zed" ]] && [[ -z "$INSIDE_EMACS" ]] && [[ -o interactive ]]; then
-  _tmux_picker="$HOME/.config/nvim/lua/tmux_picker.lua"
-  if [[ -f "$_tmux_picker" ]]; then
-    _tmux_out=$(mktemp)
-    TMUX_PICKER_OUT="$_tmux_out" nvim --clean -c "luafile $_tmux_picker"
-    _tmux_choice=$(cat "$_tmux_out" 2>/dev/null)
-    rm -f "$_tmux_out"
-    case "$_tmux_choice" in
-      attach:*) tmux attach -t "${_tmux_choice#attach:}" ;;
-      new:*) tmux new-session -s "${_tmux_choice#new:}" ;;
-      resume:*)
-        # Restore the latest tmux-resurrect snapshot, then attach to the picked
-        # session. resurrect's restore script needs a running tmux server, so
-        # bootstrap one with a throwaway session, run the restore inside it,
-        # then drop the bootstrap and attach to the real target.
-        _target="${_tmux_choice#resume:}"
-        tmux new-session -d -s __resurrect_bootstrap 2>/dev/null
-        tmux run-shell "$HOME/.tmux/plugins/tmux-resurrect/scripts/restore.sh"
-        tmux kill-session -t __resurrect_bootstrap 2>/dev/null
-        tmux attach -t "$_target"
-        unset _target
-        ;;
-      close:*|close)
-        osascript 2>/dev/null <<'APPLESCRIPT'
-tell application "Ghostty"
-  set w to front window
-  set current_idx to index of selected tab of w
-  if current_idx > 1 then
-    set prev_tab to item (current_idx - 1) of tabs of w
-    tell prev_tab to select tab
-  end if
-end tell
-APPLESCRIPT
-        exit
-        ;;
-      focus:*)
-        _target="${_tmux_choice#focus:}"
-        _found=$(osascript - "$_target" 2>/dev/null <<'APPLESCRIPT'
-on run argv
-  set target_name to item 1 of argv
-  tell application "Ghostty"
-    activate
-    repeat with w in windows
-      repeat with t in tabs of w
-        if name of t is target_name then
-          tell w to activate window
-          tell t to select tab
-          return "found"
-        end if
-      end repeat
-    end repeat
-    return "not_found"
-  end tell
-end run
-APPLESCRIPT
-)
-        if [[ "$_found" == "found" ]]; then
-          exit
-        else
-          tmux attach -t "$_target"
-        fi
-        unset _target _found
-        ;;
-    esac
-  fi
-  unset _tmux_out _tmux_choice _tmux_picker
+#  - Herdr is a persistent agent multiplexer; it replaces the old
+#    tmux + tmux-resurrect + tmux_picker.lua setup. Session and agent
+#    restore is native (see ~/.config/herdr/config.toml).
+if command -v herdr &>/dev/null && [[ "$HERDR_ENV" != "1" ]] && [[ "$TERM_PROGRAM" != "vscode" ]] && [[ "$TERM_PROGRAM" != "zed" ]] && [[ -z "$INSIDE_EMACS" ]] && [[ -o interactive ]]; then
+  herdr
+  exit
 fi
 
 # Load the current directory's .envrc before instant prompt is enabled, so
