@@ -49,6 +49,6 @@
 # resize-overlay-duration = 4s 200ms
 
 # Theme and appearance
-theme = Catppuccin Macchiato
+theme = TokyoNight Storm
 background-opacity = 0.9
 font-size = 16
