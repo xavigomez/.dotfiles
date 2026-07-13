@@ -124,7 +124,7 @@ fi
 # No --adopt: it silently pulls whatever is in $HOME into the repo, which has
 # historically pulled live auth tokens into tracked files. If a conflict
 # happens, stow aborts the package and the user resolves it manually.
-STOW_PACKAGES=(zsh zed nvim claude opencode tmux spotify-player pi)
+STOW_PACKAGES=(zsh zed nvim claude opencode herdr spotify-player pi)
 
 if [ "$VERBOSE" = true ]; then
   STOW_FLAGS="--verbose=2"
