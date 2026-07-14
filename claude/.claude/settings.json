@@ -1,8 +1,22 @@
 {
-  "model": "opus[1m]",
+  "editorMode": "vim",
   "effortLevel": "high",
-  "tui": "fullscreen",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "bash '/Users/xavi/.claude/hooks/herdr-agent-state.sh' session",
+            "timeout": 10,
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ]
+  },
+  "model": "opus[1m]",
   "skipWorkflowUsageWarning": true,
   "theme": "dark-ansi",
-  "editorMode": "vim"
+  "tui": "fullscreen"
 }
