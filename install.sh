@@ -160,6 +160,67 @@ echo "🔗 Linking Ghostty themes..."
 ln -sfn "$DOTFILES_DIR/ghostty/themes" "$HOME/Library/Application Support/com.mitchellh.ghostty/themes"
 echo "  ✓ Ghostty themes linked"
 
+# --- Herdr plugins ---
+# Best-effort: herdr is installed by the Brewfile mid-bootstrap, so a fresh
+# shell may not have it on PATH yet on first run. Never abort the bootstrap on
+# plugin install failure — collect failures and emit a copy-paste retry.
+HERDRFILE="$DOTFILES_DIR/Herdrfile"
+if [ -f "$HERDRFILE" ]; then
+  # Read non-comment, non-blank lines into an array.
+  herdr_plugins=()
+  while IFS= read -r line || [ -n "$line" ]; do
+    line="${line%%#*}"
+    line="$(echo "$line" | xargs)"
+    [ -z "$line" ] && continue
+    herdr_plugins+=("$line")
+  done < "$HERDRFILE"
+
+  if [ "${#herdr_plugins[@]}" -eq 0 ]; then
+    echo "  ✓ No herdr plugins declared in Herdrfile"
+  elif ! command -v herdr &>/dev/null; then
+    echo "  ⚠️  herdr not on PATH yet — install plugins manually:"
+    retry_cmd=""
+    for src in "${herdr_plugins[@]}"; do
+      [ -n "$retry_cmd" ] && retry_cmd="$retry_cmd && "
+      retry_cmd="${retry_cmd}herdr plugin install $src --yes"
+    done
+    echo "      $retry_cmd"
+    echo "      (restart your shell first if herdr was just installed)"
+  else
+    echo "📦 Installing herdr plugins from Herdrfile..."
+    failed_plugins=()
+    for src in "${herdr_plugins[@]}"; do
+      printf "  → %s..." "$src"
+      if herdr plugin install "$src" --yes >/tmp/herdr-plugin-install.log 2>&1; then
+        echo " ✓"
+      else
+        echo " ✗"
+        failed_plugins+=("$src")
+      fi
+    done
+
+    total="${#herdr_plugins[@]}"
+    ok=$((total - ${#failed_plugins[@]}))
+    if [ "${#failed_plugins[@]}" -eq 0 ]; then
+      echo "  ✓ $total/$total plugins installed"
+    else
+      echo ""
+      echo "  ⚠️  $ok/$total plugins installed — ${#failed_plugins[@]} failed:"
+      for src in "${failed_plugins[@]}"; do
+        echo "     • $src"
+      done
+      echo "  Retry manually:"
+      retry_cmd=""
+      for src in "${failed_plugins[@]}"; do
+        [ -n "$retry_cmd" ] && retry_cmd="$retry_cmd && "
+        retry_cmd="${retry_cmd}herdr plugin install $src --yes"
+      done
+      echo "    $retry_cmd"
+      echo "  (logs: /tmp/herdr-plugin-install.log)"
+    fi
+  fi
+fi
+
 echo ""
 echo "✅ Dotfiles bootstrapped successfully!"
 echo ""
@@ -168,4 +229,5 @@ echo "   1. Restart your terminal or run: source ~/.zshrc"
 echo "   2. Configure powerlevel10k if needed: p10k configure"
 echo "   3. When ready to add nvim+LazyVim, run: nvim"
 echo "   4. Set up Spotify: cp ~/.config/spotify-player/app.example.toml ~/.config/spotify-player/app.toml, add your client_id, then run: spotify_player"
+echo "   5. Add a herdr plugin: echo 'owner/repo' >> Herdrfile && ./install.sh"
 echo ""

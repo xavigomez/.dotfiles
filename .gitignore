@@ -48,3 +48,11 @@ opencode/.config/opencode/node_modules/
 opencode/.config/opencode/bun.lock
 opencode/.config/opencode/package.json
 opencode/.config/opencode/package-lock.json
+
+# herdr: runtime/machine-managed state under ~/.config/herdr.
+# Only config.toml is versioned under this tree.
+herdr/.config/herdr/plugins/
+herdr/.config/herdr/plugins.json
+herdr/.config/herdr/session.json
+herdr/.config/herdr/*.log
+herdr/.config/herdr/*.sock
