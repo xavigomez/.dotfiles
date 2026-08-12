@@ -2,11 +2,12 @@
 #  Auto-start herdr
 # ---------------------------------------------------------------------------
 #  - Won't nest (skips if already inside herdr — HERDR_ENV=1)
-#  - Skips inside VS Code, Zed, Emacs, or non-interactive shells
+#  - Skips inside VS Code, Zed, Emacs, non-interactive shells, and shells
+#    without a TTY (e.g. Zed's env capture runs `zsh -l -i -c` over a pipe)
 #  - Herdr is a persistent agent multiplexer; it replaces the old
 #    tmux + tmux-resurrect + tmux_picker.lua setup. Session and agent
 #    restore is native (see ~/.config/herdr/config.toml).
-if command -v herdr &>/dev/null && [[ "$HERDR_ENV" != "1" ]] && [[ "$TERM_PROGRAM" != "vscode" ]] && [[ "$TERM_PROGRAM" != "zed" ]] && [[ -z "$INSIDE_EMACS" ]] && [[ -o interactive ]]; then
+if command -v herdr &>/dev/null && [[ "$HERDR_ENV" != "1" ]] && [[ "$TERM_PROGRAM" != "vscode" ]] && [[ "$TERM_PROGRAM" != "zed" ]] && [[ -z "$INSIDE_EMACS" ]] && [[ -o interactive && -t 0 && -t 1 ]]; then
   herdr
   exit
 fi
