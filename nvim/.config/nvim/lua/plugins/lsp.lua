@@ -1,98 +1,19 @@
+-- Language support lives in lazyvim.json extras (:LazyExtras).
+-- Only put things here that no extra covers.
 return {
-  -- TypeScript
   {
     "neovim/nvim-lspconfig",
     opts = {
       servers = {
-        ts_ls = {
-          settings = {
-            typescript = {
-              inlayHints = {
-                includeInlayParameterNameHints = "all",
-                includeInlayParameterNameHintsWhenArgumentMatchesName = false,
-                includeInlayFunctionParameterTypeHints = true,
-                includeInlayVariableTypeHints = true,
-                includeInlayPropertyDeclarationTypeHints = true,
-                includeInlayFunctionLikeReturnTypeHints = true,
-                includeInlayEnumMemberValueHints = true,
-              },
-            },
-            javascript = {
-              inlayHints = {
-                includeInlayParameterNameHints = "all",
-                includeInlayParameterNameHintsWhenArgumentMatchesName = false,
-                includeInlayFunctionParameterTypeHints = true,
-                includeInlayVariableTypeHints = true,
-                includeInlayPropertyDeclarationTypeHints = true,
-                includeInlayFunctionLikeReturnTypeHints = true,
-                includeInlayEnumMemberValueHints = true,
-              },
-            },
-          },
-        },
-        -- ESLint
-        eslint = {
-          settings = {
-            workingDirectory = { mode = "auto" },
-          },
-        },
-        -- CSS
+        -- LazyVim has no CSS extra, so cssls is configured by hand.
         cssls = {},
-        -- JSON
-        jsonls = {},
-        -- Lua
-        lua_ls = {
-          settings = {
-            Lua = {
-              diagnostics = {
-                globals = { "vim" },
-              },
-              workspace = {
-                checkThirdParty = false,
-                library = vim.api.nvim_get_runtime_file("", true),
-              },
-            },
-          },
-        },
       },
     },
   },
 
-  -- Prettier formatter
-  {
-    "stevearc/conform.nvim",
-    opts = {
-      formatters_by_ft = {
-        javascript = { "prettier" },
-        javascriptreact = { "prettier" },
-        typescript = { "prettier" },
-        typescriptreact = { "prettier" },
-        css = { "prettier" },
-        html = { "prettier" },
-        json = { "prettier" },
-        jsonc = { "prettier" },
-        yaml = { "prettier" },
-        markdown = { "prettier" },
-        svelte = { "prettier" },
-      },
-    },
-  },
-
-  -- Additional filetypes
+  -- Parsers not in LazyVim's defaults or in any enabled extra.
   {
     "nvim-treesitter/nvim-treesitter",
-    opts = function(_, opts)
-      vim.list_extend(opts.ensure_installed, {
-        "typescript",
-        "javascript",
-        "tsx",
-        "css",
-        "scss",
-        "json",
-        "jsonc",
-        "lua",
-        "html",
-      })
-    end,
+    opts = { ensure_installed = { "scss", "jsonc" } },
   },
 }
