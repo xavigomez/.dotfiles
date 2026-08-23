@@ -7,6 +7,9 @@ return {
       servers = {
         -- LazyVim has no CSS extra, so cssls is configured by hand.
         cssls = {},
+        -- Emmet abbreviations. Ships with astro/typescriptreact/svelte/vue
+        -- in its default filetypes, so no includeLanguages needed.
+        emmet_language_server = {},
       },
     },
   },
