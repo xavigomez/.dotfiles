@@ -50,5 +50,5 @@
 
 # Theme and appearance
 theme = Catppuccin Mocha
-background-opacity = 0.9
+background-opacity = 1
 font-size = 16
