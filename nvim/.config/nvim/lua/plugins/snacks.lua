@@ -1,15 +1,15 @@
 return {
   "folke/snacks.nvim",
   opts = {
-    -- Snacks derives lazygit's theme from highlight groups. Two of its
-    -- defaults resolve badly under catppuccin: FloatBorder (#11111b) is
-    -- darker than the background, making inactive panel titles invisible,
-    -- and DiagnosticError resolves to pure #ff0000 rather than mocha red.
     lazygit = {
-      theme = {
-        inactiveBorderColor = { fg = "NonText" },
-        unstagedChangesColor = { fg = "ErrorMsg" },
-      },
+      -- Don't let snacks generate a lazygit config. Stock lazygit inherits
+      -- terminal_color_0..15 from the colorscheme, which is what it looks
+      -- like when launched straight from the terminal: no rewritten colours,
+      -- no nerd font icons.
+      configure = false,
+
+      -- Snacks defaults the float to no border; lazygit.nvim used rounded.
+      win = { border = "rounded" },
     },
     picker = {
       sources = {
