@@ -221,6 +221,29 @@ if [ -f "$HERDRFILE" ]; then
   fi
 fi
 
+# --- Herdr agent integrations ---
+# Installs herdr's session-reporting hooks into agent configs (claude code,
+# opencode). Those hook files are herdr-managed — updating the integration
+# rewrites them — so they are deliberately NOT tracked in this repo; this
+# step recreates them on a fresh machine. Best-effort, same rationale as
+# the plugins block above.
+HERDR_INTEGRATIONS=(claude opencode)
+if ! command -v herdr &>/dev/null; then
+  echo "  ⚠️  herdr not on PATH yet — install integrations manually:"
+  echo "      herdr integration install claude && herdr integration install opencode"
+  echo "      (restart your shell first if herdr was just installed)"
+else
+  echo "📦 Installing herdr agent integrations..."
+  for target in "${HERDR_INTEGRATIONS[@]}"; do
+    printf "  → %s..." "$target"
+    if herdr integration install "$target" >/tmp/herdr-integration-install.log 2>&1; then
+      echo " ✓"
+    else
+      echo " ✗ (logs: /tmp/herdr-integration-install.log)"
+    fi
+  done
+fi
+
 echo ""
 echo "✅ Dotfiles bootstrapped successfully!"
 echo ""
