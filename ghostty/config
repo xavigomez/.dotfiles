@@ -49,6 +49,6 @@
 # resize-overlay-duration = 4s 200ms
 
 # Theme and appearance
-theme = Catppuccin Mocha
+theme = TokyoNight Moon
 background-opacity = 1
 font-size = 16
