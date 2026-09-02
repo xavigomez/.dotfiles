@@ -156,10 +156,6 @@ mkdir -p "$HOME/Library/Application Support/com.mitchellh.ghostty"
 ln -sfn "$DOTFILES_DIR/ghostty/config" "$HOME/Library/Application Support/com.mitchellh.ghostty/config"
 echo "  ✓ Ghostty config linked"
 
-echo "🔗 Linking Ghostty themes..."
-ln -sfn "$DOTFILES_DIR/ghostty/themes" "$HOME/Library/Application Support/com.mitchellh.ghostty/themes"
-echo "  ✓ Ghostty themes linked"
-
 # --- Herdr plugins ---
 # Best-effort: herdr is installed by the Brewfile mid-bootstrap, so a fresh
 # shell may not have it on PATH yet on first run. Never abort the bootstrap on
