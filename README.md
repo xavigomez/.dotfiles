@@ -6,10 +6,17 @@ My personal dotfiles managed with GNU Stow.
 
 ```
 ~/.dotfiles/
-├── zsh/              # Zsh + Oh My Zsh + Powerlevel10k config
+├── zsh/              # Zsh + Oh My Zsh + Powerlevel10k + herdr autostart
 ├── zed/              # Zed editor settings and keybindings
 ├── ghostty/          # Ghostty terminal emulator config
-├── nvim/             # Neovim + LazyVim setup (future)
+├── nvim/             # Neovim + LazyVim (extras via lazyvim.json)
+├── claude/           # Claude Code settings, hooks, and skills
+├── opencode/         # OpenCode agent settings + TUI plugins
+├── herdr/            # herdr agent multiplexer config (active settings only)
+├── pi/               # pi coding agent settings (state stays untracked)
+├── spotify-player/   # spotify-player TUI config (app.example.toml template)
+├── docs/             # Cheatsheets for tools in use
+├── Herdrfile         # Declarative herdr plugin list (pinned via --ref)
 ├── Brewfile          # Homebrew packages and casks
 ├── install.sh        # Bootstrap script
 ├── .gitignore        # Git ignore patterns
@@ -52,6 +59,38 @@ Notes:
   built-in `TokyoNight Moon` theme, herdr `tokyo-night`, and tokyonight.nvim
   generates configs for most tools (`:TokyoNight` extras).
 
+## nvim
+
+LazyVim with language extras enabled in `lazyvim.json` (`:LazyExtras` to
+manage). The custom layer is deliberately minimal — every deviation from
+stock LazyVim lives in `lua/plugins/*.lua` and `lua/config/*.lua`, commented
+with its rationale. Non-obvious decisions:
+
+- **Registers never touch disk.** `options.lua` sets `shada` with `<0`, so
+  yanked text (tokens, `.env` contents) is never persisted to the shada file.
+  Pairs with this repo's secrets posture — same reason there is no
+  `stow --adopt` (see below).
+- **Visual `p` doesn't clobber the paste register** (`keymaps.lua`): the
+  standard `"_dP` idiom, so pasting over a selection repeatedly keeps working.
+- **Lazygit runs stock** inside nvim (`snacks.lua` sets `configure = false`)
+  so it inherits terminal chrome — see Theming.
+- **Parsers and LSP servers no extra covers** (`lsp.lua`): `scss` + `jsonc`
+  parsers, `cssls` and `emmet_language_server`. LazyVim has no CSS extra
+  (verified 2026); everything else comes from extras.
+
+## herdr
+
+Agent multiplexer — autostarted by `.zshrc` on interactive TTYs (guarded
+against nesting, VS Code/Zed/Emacs shells, and non-TTY runs; a failed launch
+drops to a bare shell instead of closing the window). `config.toml` keeps
+active settings only; herdr's own docs cover the defaults.
+
+The claude-code/opencode session-reporting hooks (`herdr-agent-state.*`) are
+**herdr-managed files** — updating an integration rewrites them — so they are
+not tracked here. `install.sh` recreates them via
+`herdr integration install <target>`; check versions with
+`herdr integration status`.
+
 ## Installation
 
 ### Prerequisites
@@ -75,9 +114,10 @@ The script will:
 3. Install GNU Stow (if needed)
 4. Run `brew bundle` to install all packages
 5. Install oh-my-zsh and plugins
-6. Use stow to create symlinks for zsh, zed, and nvim configs
+6. Use stow to create symlinks for: zsh, zed, nvim, claude, opencode, herdr, spotify-player, pi
 7. Link the Ghostty config
-8. Display next steps
+8. Install herdr plugins (Herdrfile) and agent integrations (claude, opencode)
+9. Display next steps
 
 ### Subsequent machines:
 
@@ -179,6 +219,8 @@ Some apps (CLIs, agents, etc.) keep their own config directory and write their o
 - `~/.pi/agent/auth.json` — pi's auth token
 - `~/.pi/agent/settings.json` — pi's runtime state (last-used model, version)
 - `~/.pi/agent/bin/` — binaries pi downloads on demand
+- `~/.claude/hooks/herdr-agent-state.sh` — herdr's claude-code integration hook (herdr-managed, recreated by `herdr integration install`; see the herdr section)
+- `~/.config/opencode/plugins/herdr-agent-state.js` — same, for opencode
 - `~/.config/spotify-player/credentials.json` — spotify-player's OAuth state
 - anything matching `**/auth.json`, `**/credentials.json`, `**/.env*`
 
@@ -233,16 +275,6 @@ git commit -m "add <package> to Brewfile"
 ```
 
 The next person (or you on a new machine) can run `brew bundle install` to get everything.
-
-## Setting up LazyVim (future)
-
-When you're ready to add Neovim:
-
-1. Install Neovim: `brew install neovim` (update Brewfile)
-2. Run the LazyVim installer: `nvim`
-3. Move `~/.config/nvim` to `~/.dotfiles/nvim/.config/nvim`
-4. Run `cd ~/.dotfiles && stow nvim` to create symlink
-5. Commit the changes
 
 ## Quick Reference
 
