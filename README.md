@@ -16,6 +16,42 @@ My personal dotfiles managed with GNU Stow.
 └── README.md         # This file
 ```
 
+## Theming
+
+Two kinds of TUI apps live on this machine, and knowing which is which explains
+every color on screen:
+
+**ANSI-slot followers** paint with the terminal's 16 ANSI color slots. Their
+palette *is* the terminal theme — one change in Ghostty re-themes all of them:
+
+| App | Config | Follows |
+|---|---|---|
+| Ghostty (chrome) | `ghostty/config` → `theme = TokyoNight Moon` | — (defines the slots) |
+| herdr | `herdr/.config/herdr/config.toml` → `name = "tokyo-night"` | chrome (explicit match) |
+| claude code | `claude/.claude/settings.json` → `"theme": "dark-ansi"` | chrome |
+| lazygit (bare + in nvim) | snacks `configure = false` (see `nvim/.../plugins/snacks.lua`) | chrome |
+
+**Sovereign apps** render their own truecolor palette and ignore ANSI slots:
+
+| App | Palette | Source |
+|---|---|---|
+| nvim | Tokyo Night Moon (refreshed palette: pink `#fca7ea` keywords, salmon `#ff966c` numbers) | LazyVim default (`style = "moon"`) — deliberately zero config |
+| opencode | its own built-in default theme | unset — follows nothing |
+
+Notes:
+
+- The master palette is decided in exactly one place: `ghostty/config`'s
+  `theme =` line. Everything in the follower table lands on it automatically.
+- nvim's look is **current** Tokyo Night Moon. Don't confuse it with the
+  pre-refresh purple-keyword Moon found in older screenshots; the palette file
+  (`tokyonight.nvim/lua/tokyonight/colors/moon.lua`) is the source of truth.
+- snacks' lazygit config generation (`configure = true`) was trialed and
+  rejected: stock lazygit inheriting chrome keeps one source of truth, and the
+  generated theme fought the editor colors.
+- If a sovereign app ever needs to match the chrome palette: ghostty ships a
+  built-in `TokyoNight Moon` theme, herdr `tokyo-night`, and tokyonight.nvim
+  generates configs for most tools (`:TokyoNight` extras).
+
 ## Installation
 
 ### Prerequisites
