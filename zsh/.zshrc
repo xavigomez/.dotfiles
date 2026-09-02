@@ -8,7 +8,10 @@
 #    tmux + tmux-resurrect + tmux_picker.lua setup. Session and agent
 #    restore is native (see ~/.config/herdr/config.toml).
 if command -v herdr &>/dev/null && [[ "$HERDR_ENV" != "1" ]] && [[ "$TERM_PROGRAM" != "vscode" ]] && [[ "$TERM_PROGRAM" != "zed" ]] && [[ -z "$INSIDE_EMACS" ]] && [[ -o interactive && -t 0 && -t 1 ]]; then
-  herdr
+  # herdr is the terminal: a normal quit exits the shell and closes the window.
+  # On a launch failure, drop to a bare shell (zsh -f skips rc, so no
+  # relaunch loop) so the error stays visible and fixable.
+  herdr || exec zsh -f
   exit
 fi
 
