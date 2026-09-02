@@ -113,7 +113,6 @@ split_vertical = "prefix+|"
 # split_horizontal = "prefix+minus"
 # close_pane = "prefix+x"
 # zoom = "prefix+z"       # legacy alias: fullscreen
-zoom = "prefix+m"
 # resize_mode = "prefix+r"
 resize_mode = "prefix+shift+r"
 # toggle_sidebar = "prefix+b"
