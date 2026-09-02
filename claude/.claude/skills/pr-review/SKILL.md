@@ -1,115 +1,94 @@
 ---
 name: pr-review
 description: >
-  Conduct a staff-level code review of the current branch's changes vs the base branch.
-  Returns a short bullet list of MAIN issues only — no nitpicks, no praise, no "non-blocking" caveats.
-  After the list, drills into each issue one at a time, waiting for the user between each.
+  Adversarial multi-agent review of the current branch's changes vs the base branch.
+  Fans out one subagent per review angle by default (solo only on explicit request),
+  verifies findings, and returns a short bullet list of MAIN blocking issues only —
+  no nitpicks, no praise. After the list, drills into each issue one at a time,
+  waiting for the user between each.
 ---
 
 # PR Review
 
-Review the code changes on the current branch as a staff-level engineer.
+Adversarial, multi-agent review of the current branch's changes. You are the orchestrator:
+subagents find, you verify and judge.
 
 ## Gather context
 
-1. Detect the base branch and current branch:
+1. Resolve the real base: the open PR's base branch if one exists (`gh pr view`); else the
+   nearer of `git merge-base HEAD origin/develop` / `origin/main`; else ask. Never assume main.
+2. Diff against that base. List changed files. Read the full changed files yourself — you
+   will be verifying claims against them.
+3. If a ticket is linked (Linear, PR body), fetch its acceptance criteria and any documented
+   waivers (deliberate divergences are not findings).
+4. Ask the user for known-and-tracked issues to exclude before launching anything.
 
-```!
-git rev-parse --abbrev-ref HEAD
-```
+## Review: fan out by default
 
-```!
-git log --oneline --merges -1 --format=%P HEAD | head -1 || echo "main"
-```
+Launch one subagent per angle, in parallel, on a cheaper model than your own (Opus unless
+told otherwise). You write each brief; you never delegate the judging. Review inline WITHOUT
+agents only when the user explicitly says so ("solo", "no agents", "inline") or the diff is
+trivial (< ~50 lines) — say which mode you're using either way.
 
-2. Read the PR diff (try `main` first, fall back to `master`):
+The six standard angles (add or drop per the user's ask):
 
-```!
-git diff main...HEAD 2>/dev/null || git diff master...HEAD
-```
+1. **Security** — trust boundaries, credentials in logs/headers/caches, cookie attributes,
+   injection, cache poisoning. Safety is never traded for simplicity.
+2. **Correctness vs AC** — verdict table, one AC at a time, with quoted evidence.
+3. **Code quality** — the ponytail ladder per symbol: does it need to exist → already in the
+   codebase → stdlib → platform → installed dep → one line → minimum that works. Dead code
+   claims require the grep that came up empty.
+4. **Architecture** — judge ONLY what the diff introduces or touches, against the repo's own
+   docs (architecture/debt/ADRs) if present; verify debt-doc edits for honesty.
+5. **Bugs** — concrete failure scenarios, verified mechanically.
+6. **Tests** — missing pins for load-bearing behavior, padded tests, false pins (a test that
+   never reaches the guard it claims to cover). Run the suite.
 
-3. List changed files:
+Every brief includes: repo, branch, base SHA, changed-file list; the hunt list for its angle;
+the exclusion list and waivers; and this output contract — per finding: `file:line` · claim ·
+quoted evidence · concrete failure scenario · minimal fix · severity · confidence, plus a
+"verified clean" list (negative results are findings too).
 
-```!
-git diff main...HEAD --name-only 2>/dev/null || git diff master...HEAD --name-only
-```
+**Evidence rule (agents and you):** a claim about a dependency or framework's behavior must
+cite its installed source (`node_modules`, a sibling repo checked out locally) or a live
+repro. Training-memory folklore is not evidence.
 
-4. Read the full content of each changed file to understand context beyond the diff.
-5. Read any CLAUDE.md files in the repo root and `.claude/` directory to learn project-specific conventions.
-6. Read related files the diff touches transitively: helpers/utilities the changed code calls, callers of changed exports, and any skill/rule files referenced by `.claude/skills/`. The goal is to evaluate the change in the context of the system, not in isolation.
+## Judge (you, not the agents)
 
-## Review process
+- Dedupe across angles; angles converge on real issues — that's signal, not repetition.
+- Verify each surviving finding against the code yourself. Never relay an agent's severity:
+  re-adjudicate at the layer where the behavior manifests.
+- Ponytail filter: every finding carries its minimal fix (delete it / use the existing thing /
+  one line / smallest change). A finding whose fix is heavier than the disease is dropped —
+  except security, correctness at trust boundaries, and data loss, which are never dropped
+  for cost.
+- The bar: would a staff engineer block-or-fix before merge? No nitpicks, praise, style
+  preferences without a written convention, hypotheticals, or pre-existing issues the diff
+  doesn't worsen.
 
-Be extra thorough. The output is short — that means the analysis behind it has to be deep, not lazy. Skim once for orientation, then go through each changed file deliberately with these lenses:
+## Output
 
-### Correctness
-- Logic errors, off-by-one, null/undefined risks, type-coercion surprises (e.g. `String(null)` becoming `"null"`).
-- Missing error handling at system boundaries (network, parse, user input).
-- Race conditions, ordering assumptions, double-firing, missed cleanup.
-- Comments or docstrings that contradict the code — these mislead future maintainers and count as real issues.
+### Step 1: AC table (when a ticket exists), then bullets only
 
-### Architecture & conventions
-- Violations of patterns established in CLAUDE.md, project skills (`.claude/skills/*/rules/*.md`), and the rest of the codebase.
-- Reinventing utilities that already exist; abstractions added "just in case" with no second caller; layering breaks (e.g. importing client-only code from a server module).
-- Public API shape: prop names, exported types, event/action names that will be painful to rename later.
+Per AC: met / partial / not met, with evidence. Then ONLY a short bullet list of the main
+issues, most severe first, one line each, as Conventional Comments — `issue`/`todo`/`question`,
+always `(blocking)` (the filter only lets blocking through). No file paths in bullets (they
+become inline PR comments, already anchored). No preamble, no summary.
 
-### Performance
-- N+1 queries, unbounded lists, missing pagination, blocking I/O on the render path.
-- Bundle-size impact: large new dependencies, accidental client-bundling of server-only code.
-- Re-render hot paths: missing memoization where it actually matters (not speculative).
+End with exactly: `Say "go" and I'll walk through them one at a time.`
 
-### Security
-- Injection risks (XSS, SQL, command, prototype pollution).
-- Sensitive data exposure: PII, credentials, tokens, payment-card data leaking into logs/analytics/URLs.
-- Auth/authz gaps, missing CSRF/SSRF defenses, unsafe redirects, weakened crypto.
+If nothing survived, say so in one sentence and stop.
 
-### What does NOT make the list
-The output is for the **author at the keyboard**, not a thoroughness performance. Filter out:
+### Step 2: Drilldown, one at a time
 
-- **Nitpicks** — naming, comment wording, formatting, "consider renaming the variable", "spell out the acronym".
-- **Praise** — what was done well.
-- **Style preferences** not backed by a written convention.
-- **Hypothetical future problems** ("what if someone later adds a child that…").
-- **Pre-existing issues** the PR did not introduce. Mention them only if the PR makes them materially worse.
-- **"Non-blocking" caveats, suggestions, questions, thoughts** — if it isn't a real issue worth fixing, drop it. If you find yourself softening a finding with "minor" or "trivial", that's a sign it shouldn't be on the list at all.
+On "go"/"next": one issue per message — the Conventional Comments header, the single
+`path/to/file.ext:line` reference on its own line, then a few sentences: what's wrong, why it
+matters, the concrete fix. Stop and wait.
 
-The bar: would a staff engineer block-or-fix on this before merge? If no, leave it out.
+Drilldown contract:
 
-## Output format
-
-### Step 1: Bullet list only
-
-Output ONLY a short bullet list of the main issues. One line per issue. Each bullet is a short, specific noun phrase that names the problem. No preamble, no closing summary.
-
-Use [Conventional Comments](https://conventionalcomments.org/) labels. Because the filter only lets blocking findings through, the decoration is always `(blocking)` and the label is almost always `issue`. Use `todo` when the bullet is a concrete missing action the author must add, or `question` when the bullet is a load-bearing ambiguity the author must answer before merge. Do not use `suggestion`, `nitpick`, `praise`, `thought`, `polish`, or `quibble` — those are non-blocking by definition and the filter excludes them.
-
-These bullets are written to be pasted as inline GitHub PR review comments, which are already anchored to a specific file and line. Do NOT include file paths or line numbers in the bullet — GitHub already shows that context. Just the label and the problem statement.
-
-Format:
-
-```
-- **issue (blocking):** <Short problem statement>
-- **todo (blocking):** <Short problem statement>
-- **question (blocking):** <Short problem statement>
-```
-
-Then end with exactly one line:
-
-```
-Say "go" and I'll walk through them one at a time.
-```
-
-If there are no real issues, say so in one sentence and stop. Do not pad.
-
-### Step 2: Drilldown (only after the user says go)
-
-When the user signals to continue ("go", "ok", "next", "first one", etc.), discuss issues one at a time:
-
-- Pick the first unaddressed issue from the list.
-- Open with the same Conventional Comments header used in the bullet list (`**issue (blocking):** <subject>`). Do NOT number the issues or substitute the label with `1.`, `2.`, etc.
-- Immediately under the header, on its own line, give the single file + line range the comment is headed for, in IDE-style `path/to/file.ext:18` or `path/to/file.ext:18-29` form. One reference per drilldown — do not sprinkle the path through the prose.
-- Below that, explain in a few sentences: what's wrong, why it matters, and a concrete suggested fix or two. Refer to symbols/lines by name in the prose; do not repeat the file path.
-- Stop. Wait for the user to respond — they may want to discuss, push back, ask for an alternative, or move on.
-- When they signal continue, move to the next issue.
-
-Do NOT dump all the details up front. Do NOT batch multiple issues into one message during drilldown. The whole point is one-at-a-time so the user can think about each one without a wall of text.
+- "next"/"go" advances the EXPLANATION. It never applies anything.
+- Applying a fix requires explicit per-item consent ("apply it", "do it"). Never batch-apply.
+- Re-explain in plain language on request; repost earlier items instead of making the user
+  scroll back.
+- After each applied fix: format, lint, typecheck, affected tests — before moving on.
