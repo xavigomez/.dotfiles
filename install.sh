@@ -191,7 +191,7 @@ if [ -f "$HERDRFILE" ]; then
     failed_plugins=()
     for src in "${herdr_plugins[@]}"; do
       printf "  → %s..." "$src"
-      if herdr plugin install "$src" --yes >/tmp/herdr-plugin-install.log 2>&1; then
+      if herdr plugin install $src --yes >/tmp/herdr-plugin-install.log 2>&1; then
         echo " ✓"
       else
         echo " ✗"

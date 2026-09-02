@@ -1,3 +1,3 @@
-# Herdr plugins — one GitHub shorthand per line (owner/repo[/subdir]).
-# Re-run install.sh to install/upgrade. Tracks latest; no pin.
-cloudmanic/herdr-plus
+# Herdr plugins — one entry per line: owner/repo[/subdir] [--ref tag|branch|sha].
+# Re-run install.sh to install/upgrade.
+cloudmanic/herdr-plus --ref v0.1.24
