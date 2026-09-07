@@ -42,16 +42,18 @@ palette *is* the terminal theme — one change in Ghostty re-themes all of them:
 
 | App | Palette | Source |
 |---|---|---|
-| nvim | Tokyo Night Moon (refreshed palette: pink `#fca7ea` keywords, salmon `#ff966c` numbers) | LazyVim default (`style = "moon"`) — deliberately zero config |
+| nvim | Tokyoppuccin (Catppuccin Frappé surfaces + Tokyo Night syntax, bg matched to chrome `#222436`) | `nvim/.../plugins/tokyoppuccin.lua` — port of the Zed theme |
 | opencode | its own built-in default theme | unset — follows nothing |
 
 Notes:
 
 - The master palette is decided in exactly one place: `ghostty/config`'s
   `theme =` line. Everything in the follower table lands on it automatically.
-- nvim's look is **current** Tokyo Night Moon. Don't confuse it with the
-  pre-refresh purple-keyword Moon found in older screenshots; the palette file
-  (`tokyonight.nvim/lua/tokyonight/colors/moon.lua`) is the source of truth.
+- nvim's colorscheme is a hand port of Zed's Tokyoppuccin theme
+  (EmmanuelVernet/zed-tokyoppuccin): catppuccin/nvim (frappé) base with syntax
+  colors copied from the Zed theme JSON, editor bg overridden to the chrome's
+  `#222436` so it blends with the terminal. Storm/Frappé variants share
+  identical syntax colors — only their backgrounds differ.
 - snacks' lazygit config generation (`configure = true`) was trialed and
   rejected: stock lazygit inheriting chrome keeps one source of truth, and the
   generated theme fought the editor colors.
