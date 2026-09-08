@@ -86,6 +86,15 @@ against nesting, VS Code/Zed/Emacs shells, and non-TTY runs; a failed launch
 drops to a bare shell instead of closing the window). `config.toml` keeps
 active settings only; herdr's own docs cover the defaults.
 
+### Pane navigation
+
+herdr panes move with `ctrl+alt+hjkl` (herdr's docs-recommended prefix-free
+family — herdr intercepts the chord before pane apps, so it works from
+anywhere, including agent TUIs and from inside nvim as a jump-out).
+`ctrl+hjkl` is left free for nvim: `nvim/lua/config/herdr-navigator.lua`
+moves nvim splits with it and hands off to herdr (`herdr pane focus
+--direction … --current`) at nvim's edge, vim-tmux-navigator style.
+
 The claude-code/opencode session-reporting hooks (`herdr-agent-state.*`) are
 **herdr-managed files** — updating an integration rewrites them — so they are
 not tracked here. `install.sh` recreates them via

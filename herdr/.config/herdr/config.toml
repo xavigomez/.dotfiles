@@ -22,11 +22,15 @@ rename_tab = "prefix+,"
 goto = "prefix+s"
 settings = "prefix+shift+s"
 
-# Direct (no-prefix) vim-style pane navigation.
-focus_pane_left = "ctrl+h"
-focus_pane_down = "ctrl+j"
-focus_pane_up = "ctrl+k"
-focus_pane_right = "ctrl+l"
+# Prefix-free pane navigation on herdr's docs-recommended ctrl+alt family:
+# herdr intercepts it before pane apps, so it works from everywhere — shells,
+# agent TUIs, even from inside nvim as a jump-out. Plain ctrl+hjkl stays free
+# for nvim (see nvim/.config/nvim/lua/config/herdr-navigator.lua), which
+# hands off to herdr at its splits' edges.
+focus_pane_left = ["prefix+h", "ctrl+alt+h"]
+focus_pane_down = ["prefix+j", "ctrl+alt+j"]
+focus_pane_up = ["prefix+k", "ctrl+alt+k"]
+focus_pane_right = ["prefix+l", "ctrl+alt+l"]
 
 # Same keys for workspace navigation while the navigate picker is open.
 navigate_workspace_up = "ctrl+k"
