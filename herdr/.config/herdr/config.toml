@@ -10,12 +10,17 @@ name = "tokyo-night"
 
 [keys]
 # tmux muscle-memory ports. Unlisted actions use herdr defaults
-# (prefix+s settings, prefix+g goto, prefix+z zoom, prefix+v split).
+# (prefix+w workspace picker, prefix+z zoom, prefix+v split).
 reload_config = "prefix+r"
 resize_mode = "prefix+shift+r"
 new_workspace = "prefix+shift+w"
 rename_workspace = "prefix+$"
 rename_tab = "prefix+,"
+
+# Session navigator on tmux's choose-tree key. Settings move to shift+s
+# so they don't collide — herdr defaults both goto and settings to prefix+s.
+goto = "prefix+s"
+settings = "prefix+shift+s"
 
 # Direct (no-prefix) vim-style pane navigation.
 focus_pane_left = "ctrl+h"
