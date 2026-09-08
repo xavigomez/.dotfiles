@@ -66,7 +66,25 @@
   "project_panel": {
     "dock": "right"
   },
-  "theme": "Tokyo Night Moon",
+  "theme": "Tokyoppuccin Storm",
+  // Match nvim/ghostty chrome bg (#222436): every Storm surface that ships
+  // as the theme's base #24283b, remapped. Delta only — rest of theme intact.
+  "experimental.theme_overrides": {
+    "background": "#222436",
+    "editor.background": "#222436",
+    "editor.gutter.background": "#222436",
+    "editor.subheader.background": "#222436",
+    "terminal.background": "#222436",
+    "panel.background": "#222436",
+    "toolbar.background": "#222436",
+    "status_bar.background": "#222436",
+    "title_bar.background": "#222436",
+    "title_bar.inactive_background": "#222436",
+    "elevated_surface.background": "#222436",
+    "border.variant": "#222436",
+    "border.transparent": "#222436",
+    "border.disabled": "#222436"
+  },
   "ui_font_size": 16,
   "vim_mode": true
 }
