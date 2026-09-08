@@ -10,7 +10,7 @@ My personal dotfiles managed with GNU Stow.
 ├── zed/              # Zed editor settings and keybindings
 ├── ghostty/          # Ghostty terminal emulator config
 ├── nvim/             # Neovim + LazyVim (extras via lazyvim.json)
-├── claude/           # Claude Code skills (settings.json is machine-local)
+├── claude/           # Claude Code settings and skills (hook path stays machine-agnostic)
 ├── opencode/         # OpenCode agent settings + TUI plugins
 ├── herdr/            # herdr agent multiplexer config (active settings only)
 ├── pi/               # pi coding agent settings (state stays untracked)
@@ -35,7 +35,7 @@ palette *is* the terminal theme — one change in Ghostty re-themes all of them:
 |---|---|---|
 | Ghostty (chrome) | `ghostty/config` → `theme = TokyoNight Moon` | — (defines the slots) |
 | herdr | `herdr/.config/herdr/config.toml` → `name = "tokyo-night"` | chrome (explicit match) |
-| claude code | `~/.claude/settings.json` → `"theme": "dark-ansi"` (machine-local, untracked) | chrome |
+| claude code | `claude/.claude/settings.json` → `"theme": "dark-ansi"` | chrome |
 | lazygit (bare + in nvim) | snacks `configure = false` (see `nvim/.../plugins/snacks.lua`) | chrome |
 
 **Sovereign apps** render their own truecolor palette and ignore ANSI slots:
@@ -97,12 +97,17 @@ moves nvim splits with it and hands off to herdr (`herdr pane focus
 
 The claude-code/opencode session-reporting hooks (`herdr-agent-state.*`) are
 **herdr-managed files** — updating an integration rewrites them — so they are
-not tracked here. Same for `~/.claude/settings.json`: Claude Code rewrites it
-in its own canonical format on every save, and herdr's integration bakes a
-machine-specific hook path into it, so it is provisioned per machine (stow
-links only the skills). `install.sh` recreates the hooks via
+not tracked here. `install.sh` recreates them via
 `herdr integration install <target>`; check versions with
 `herdr integration status`.
+
+`claude/.claude/settings.json` **is** tracked, but must stay
+machine-agnostic: the herdr hook command uses `"$HOME/..."` (hook commands
+run through a shell, so it expands per machine) — never an absolute path.
+Two known rewriters: Claude Code re-serializes the file on every settings
+save (no-op diffs once the file is in its canonical format), and
+`herdr integration install claude` appends a duplicate absolute-path hook
+entry when re-run — delete the duplicate afterwards.
 
 ## Installation
 
@@ -233,7 +238,6 @@ Some apps (CLIs, agents, etc.) keep their own config directory and write their o
 - `~/.pi/agent/settings.json` — pi's runtime state (last-used model, version)
 - `~/.pi/agent/bin/` — binaries pi downloads on demand
 - `~/.claude/hooks/herdr-agent-state.sh` — herdr's claude-code integration hook (herdr-managed, recreated by `herdr integration install`; see the herdr section)
-- `~/.claude/settings.json` — Claude Code's own state file (rewritten on every save) plus herdr's machine-specific hook path; provisioned per machine, never tracked
 - `~/.config/opencode/plugins/herdr-agent-state.js` — same, for opencode
 - `~/.config/spotify-player/credentials.json` — spotify-player's OAuth state
 - anything matching `**/auth.json`, `**/credentials.json`, `**/.env*`

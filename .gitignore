@@ -58,8 +58,3 @@ herdr/.config/herdr/*.log
 herdr/.config/herdr/*.sock
 herdr/.config/herdr/release-notes.json
 herdr/.config/herdr/.plugins.lock
-
-# claude: settings.json is machine-managed state (Claude Code rewrites it on
-# every save and herdr's integration bakes in a machine-specific hook path),
-# so it is provisioned per machine, not versioned. Skills stay stowed.
-claude/.claude/settings.json
