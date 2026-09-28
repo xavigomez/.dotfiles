@@ -15,7 +15,7 @@ My personal dotfiles managed with GNU Stow.
 ├── herdr/            # herdr agent multiplexer config (active settings only)
 ├── pi/               # pi coding agent settings (state stays untracked)
 ├── spotify-player/   # spotify-player TUI config (app.example.toml template)
-├── docs/             # Cheatsheets for tools in use
+├── docs/             # Cheatsheets and decision write-ups
 ├── Herdrfile         # Declarative herdr plugin list (pinned via --ref)
 ├── Brewfile          # Homebrew packages and casks
 ├── install.sh        # Bootstrap script
@@ -62,22 +62,98 @@ Notes:
 
 ## nvim
 
-LazyVim with language extras enabled in `lazyvim.json` (`:LazyExtras` to
-manage). The custom layer is deliberately minimal — every deviation from
-stock LazyVim lives in `lua/plugins/*.lua` and `lua/config/*.lua`, commented
-with its rationale. Non-obvious decisions:
+LazyVim, with every deviation from stock living in `nvim/.config/nvim/` and
+commented with its rationale. Two rules keep the layer small:
 
-- **Registers never touch disk.** `options.lua` sets `shada` with `<0`, so
-  yanked text (tokens, `.env` contents) is never persisted to the shada file.
-  Pairs with this repo's secrets posture — same reason there is no
-  `stow --adopt` (see below).
+1. **Language support goes through extras** (`lazyvim.json`, managed with
+   `:LazyExtras`) — never hand-rolled lspconfig.
+2. **`lua/plugins/` is only for what no extra covers**, plus overrides of
+   plugins LazyVim already ships.
+
+### Extras enabled (`lazyvim.json`)
+
+`formatting.prettier` · `lang.astro` · `lang.json` · `lang.rust` ·
+`lang.tailwind` · `lang.typescript` · `linting.eslint`
+
+Everything those drag in (vtsls, eslint-lsp, rustaceanvim, crates.nvim,
+SchemaStore, conform, nvim-lint, …) is stock — only the deltas below are ours.
+
+### Plugins LazyVim doesn't ship
+
+| Plugin | Spec | What it does |
+|---|---|---|
+| `EmmanuelVernet/tokyoppuccin.nvim` | `plugins/tokyoppuccin.lua` | The colorscheme (see Theming). Eager at `priority = 1000`; `on_colors`/`on_highlights` force bg `#222436` on the editor, floats and neo-tree so nvim blends into the terminal chrome. |
+| `laytan/cloak.nvim` | `plugins/cloak.lua` | Masks `=` values in `.env*`, `*.env` and `.dev.vars` buffers. Loads on `BufReadPre`/`BufNewFile` (must beat `BufEnter`), `cloak_on_leave = true`, mask keeps the real value's width. |
+
+### Overrides of plugins LazyVim does ship
+
+| Plugin | Spec | Delta |
+|---|---|---|
+| `gitsigns.nvim` | `plugins/gitsigns.lua` | Inline blame on by default — 300 ms delay, `<author>, <relative time>` format. |
+| `snacks.nvim` | `plugins/snacks.lua` | ① terminal `<C-hjkl>` routed through the herdr navigator (floating terminals keep stock behavior, so the key reaches the shell inside); ② lazygit `configure = false` so stock lazygit inherits terminal chrome (see Theming), with the `rounded` border restored that snacks drops; ③ file and explorer pickers show hidden **and** ignored files, excluding `node_modules` and `.git`. |
+| `nvim-lspconfig` | `plugins/lsp.lua` | `cssls` and `emmet_language_server` (LazyVim still ships no `lang.css` extra as of v16); plus a `vtsls` `publishDiagnostics` handler that drops TS unused-symbol hints (6133/6192/6196/6198) when eslint is attached to the buffer, so the same unused variable isn't reported twice — write-up in `docs/nvim-vtsls-eslint-dedupe.md`. |
+| `nvim-treesitter` | `plugins/lsp.lua` | Parsers no extra covers: `scss`, `jsonc`. |
+| `rustaceanvim` | `plugins/rustaceanvim.lua` | Buffer-local `<leader>cu` → `:RustLsp runnables`, chained onto the extra's own `on_attach` instead of replacing it. |
+| `LazyVim/LazyVim` | `plugins/tokyoppuccin.lua` | `colorscheme = "tokyoppuccin"`. |
+
+### Config (`lua/config/`)
+
+- **Registers never touch disk** (`options.lua`): `shada` is
+  `'100,<0,s10,h,r/tmp/,r/private/` — `<0` keeps yanked text (tokens, `.env`
+  contents) out of the shada file, and the `r` flags keep marks for temp paths
+  out of it too. Same posture as cloak.nvim above and as the no-`stow --adopt`
+  rule below.
+- **`softtabstop = 2`** (`options.lua`): LazyVim sets `shiftwidth`/`tabstop` but
+  leaves `softtabstop` at Neovim's `0`, so `<Tab>`/`<BS>` move by 2 as well.
 - **Visual `p` doesn't clobber the paste register** (`keymaps.lua`): the
   standard `"_dP` idiom, so pasting over a selection repeatedly keeps working.
-- **Lazygit runs stock** inside nvim (`snacks.lua` sets `configure = false`)
-  so it inherits terminal chrome — see Theming.
-- **Parsers and LSP servers no extra covers** (`lsp.lua`): `scss` + `jsonc`
-  parsers, `cssls` and `emmet_language_server`. LazyVim has no CSS extra
-  (verified 2026); everything else comes from extras.
+- **`<C-hjkl>` crosses nvim splits *and* herdr panes** (`keymaps.lua` +
+  `herdr-navigator.lua`, ~90 lines): vim-tmux-navigator style — move the split;
+  at nvim's edge step into a float parked on that side (explorer sidebar,
+  pickers), which `wincmd` ignores; then hand off to `herdr pane focus`. Full
+  rationale in the herdr section.
+- **No `autocmds.lua`**: the starter ships one; we have none, so LazyVim's
+  stock autocmds run unmodified.
+- **`lazy.lua` is the LazyVim starter template with exactly three edits**:
+  `defaults.lazy = true` (custom plugins lazy-load too, instead of eager-loading
+  and making every `event = "LazyFile"` a no-op), no `version` key at all (so
+  lazy.nvim resolves tagged releases rather than git HEAD), and
+  `install.colorscheme = { "tokyoppuccin", "habamax" }` (starter: tokyonight) —
+  that last one only paints the bootstrap install on a fresh machine; the real
+  colorscheme is set in `plugins/tokyoppuccin.lua`. Everything else, including
+  the `disabled_plugins` list, is stock.
+- **`.stylua.toml`**: 2-space indent, 120-column width, so `stylua` output
+  matches what's committed.
+- **`lazy-lock.json` is committed**, so a new machine gets the same plugin
+  commits rather than whatever is current.
+
+### Keymaps added
+
+| Key | Mode | Action |
+|---|---|---|
+| `<C-h/j/k/l>` | n, t | Move across nvim splits → floats → herdr panes |
+| `p` | x | Paste over selection without clobbering the register |
+| `<leader>uk` / `<leader>uK` | n | `:CloakToggle` / `:CloakPreviewLine` |
+| `<leader>uB` | n | Toggle gitsigns inline blame |
+| `<leader>cu` | n (rust buffers) | `:RustLsp runnables` |
+
+`<leader>u*` is LazyVim's ui/toggle group, so the new toggles show up in the
+which-key list next to the stock ones.
+
+### Tried, then returned to canon
+
+Deviations that existed and were removed, so they don't get re-litigated:
+
+| Reverted | Commit | Why it went back to stock |
+|---|---|---|
+| `emmet-vim` | `1ceb912` | Replaced by `emmet_language_server`, which already lists astro/tsx/jsx/svelte/vue in its default filetypes. Cost: the `<C-y>,` chord — completions come through blink now. |
+| `obsidian.nvim` + `telescope.nvim` | `fe0e39e` | obsidian v3.9.0 registers completion through nvim-cmp only, so `[[` never worked under blink.cmp; telescope existed solely as its dependency and was eager-loaded on every startup. Vault at `~/.obsidian` untouched; `<leader>st` uses `Snacks.picker`. |
+| Hand-rolled catppuccin colorscheme | `7b6d594`, then `9ce69c8` | The spec never actually applied (LazyVim ships catppuccin `lazy = true`, so its `config` never ran and tokyonight-moon was live the whole time). Superseded by the official `tokyoppuccin.nvim`. |
+| snacks lazygit theme generation | `781ec43` → `7b6d594` | `configure = true` fought the editor colors; stock lazygit inheriting terminal chrome keeps one source of truth. See Theming. |
+| `defaults.lazy = false` | `46ebeb6` | Eager-loading every custom plugin defeats LazyVim's architecture and makes each `event = "LazyFile"` a no-op. A plugin that misbehaves lazy-loaded gets a per-plugin fix instead. |
+| `require("config.keymaps")` inside `lazy.lua` | `774d647` | It loaded user keymaps during startup while LazyVim loads its own on `VeryLazy`, inverting the order so LazyVim's defaults silently won every collision (reproduced with `<C-h>`). |
+| `number`, `relativenumber`, `expandtab`, `shiftwidth`, `tabstop` in `options.lua` | `5d51794` | All already LazyVim defaults — restating them hid which options were genuine deviations. |
+
 
 ## herdr
 
