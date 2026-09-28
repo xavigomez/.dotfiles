@@ -146,3 +146,6 @@ alias v="nvim"
 # direnv hook — silent at install time; the starting cwd's .envrc was already
 # exported above the instant prompt block.
 (( ${+commands[direnv]} )) && emulate zsh -c "$(direnv hook zsh)"
+
+# bun global binaries
+export PATH="$HOME/.bun/bin:$PATH"
