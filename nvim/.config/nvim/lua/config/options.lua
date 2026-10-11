@@ -7,3 +7,7 @@ vim.opt.shada = "'100,<0,s10,h,r/tmp/,r/private/"
 
 -- Make <Tab>/<BS> operate on 2 spaces at a time (Neovim defaults to 0)
 vim.opt.softtabstop = 2
+
+-- Root = the directory nvim was opened in. LazyVim's default walks up to the
+-- nearest LSP root / .git, so <leader>e and pickers jumped out of subpaths.
+vim.g.root_spec = { "cwd" }
