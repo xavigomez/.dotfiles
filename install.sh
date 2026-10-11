@@ -156,6 +156,13 @@ mkdir -p "$HOME/Library/Application Support/com.mitchellh.ghostty"
 ln -sfn "$DOTFILES_DIR/ghostty/config" "$HOME/Library/Application Support/com.mitchellh.ghostty/config"
 echo "  ✓ Ghostty config linked"
 
+# --- Lazygit ---
+echo ""
+echo "🔗 Linking lazygit config..."
+mkdir -p "$HOME/Library/Application Support/lazygit"
+ln -sfn "$DOTFILES_DIR/lazygit/config.yml" "$HOME/Library/Application Support/lazygit/config.yml"
+echo "  ✓ Lazygit config linked"
+
 # --- Herdr plugins ---
 # Best-effort: herdr is installed by the Brewfile mid-bootstrap, so a fresh
 # shell may not have it on PATH yet on first run. Never abort the bootstrap on

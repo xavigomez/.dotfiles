@@ -1,0 +1,11 @@
+# Linked to ~/Library/Application Support/lazygit/config.yml by install.sh
+# (lazygit's macOS config dir isn't under ~/.config, so stow can't reach it).
+gui:
+  theme:
+    # Default is ANSI blue, which TokyoNight Moon renders as light #82aaff:
+    # red/green diff text on it is unreadable. Use TokyoNight Moon's own
+    # visual-selection navy instead (also covers range selection in staging).
+    selectedLineBgColor:
+      - "#2d3f76"
+    inactiveViewSelectedLineBgColor:
+      - "#2f334d"
