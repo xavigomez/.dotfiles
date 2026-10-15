@@ -61,6 +61,70 @@ else
 fi
 echo "✓ Brewfile dependencies installed"
 
+# --- Remove stock App Store apps ---
+# Best-effort: uninstalls the apps listed in Masfile via mas. Apps that are
+# not installed are skipped, and sudo is only requested when there is
+# something to remove. Never abort the bootstrap on failure — collect
+# failures and emit a copy-paste retry.
+MASFILE="$DOTFILES_DIR/Masfile"
+if [ -f "$MASFILE" ]; then
+  mas_ids=()
+  while IFS= read -r line || [ -n "$line" ]; do
+    line="${line%%#*}"
+    line="$(echo "$line" | xargs)"
+    [ -z "$line" ] && continue
+    mas_ids+=("$line")
+  done < "$MASFILE"
+
+  if [ "${#mas_ids[@]}" -eq 0 ]; then
+    echo "✓ No App Store apps declared in Masfile"
+  elif ! command -v mas &>/dev/null; then
+    echo "⚠️  mas not on PATH — skipping App Store app removal"
+  else
+    mas_list="$(mas list 2>/dev/null || true)"
+    to_remove=()
+    for id in "${mas_ids[@]}"; do
+      if echo "$mas_list" | awk -v id="$id" '$1 == id { found = 1 } END { exit !found }'; then
+        to_remove+=("$id")
+      elif [ "$VERBOSE" = true ]; then
+        echo "  · $id not installed, skipping"
+      fi
+    done
+
+    if [ "${#to_remove[@]}" -eq 0 ]; then
+      echo "✓ No stock App Store apps to remove"
+    else
+      echo "🗑️  Removing stock App Store apps from Masfile (sudo required)..."
+      failed_apps=()
+      if sudo -v; then
+        for id in "${to_remove[@]}"; do
+          name="$(echo "$mas_list" | awk -v id="$id" '$1 == id { $1 = ""; sub(/^ +/, ""); sub(/ +\([^)]*\)$/, ""); print }')"
+          printf "  → %s (%s)..." "$name" "$id"
+          if sudo mas uninstall "$id" >/tmp/mas-uninstall.log 2>&1; then
+            echo " ✓"
+          else
+            echo " ✗"
+            failed_apps+=("$id")
+          fi
+        done
+      else
+        failed_apps=("${to_remove[@]}")
+      fi
+
+      total="${#to_remove[@]}"
+      ok=$((total - ${#failed_apps[@]}))
+      if [ "${#failed_apps[@]}" -eq 0 ]; then
+        echo "  ✓ $total/$total apps removed"
+      else
+        echo ""
+        echo "  ⚠️  $ok/$total apps removed — ${#failed_apps[@]} failed. Retry manually:"
+        echo "    sudo mas uninstall ${failed_apps[*]}"
+        echo "  (logs: /tmp/mas-uninstall.log)"
+      fi
+    fi
+  fi
+fi
+
 # --- Rustup ---
 if [ -x "/opt/homebrew/opt/rustup/bin/rustup" ]; then
   echo "📦 Installing stable Rust toolchain via rustup..."

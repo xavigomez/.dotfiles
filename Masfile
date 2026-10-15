@@ -1,0 +1,7 @@
+# Stock Mac App Store apps to REMOVE during bootstrap (via `mas uninstall`).
+# One App Store id per line; comments allowed. Find ids with: mas list
+682658836 # GarageBand
+409183694 # Keynote
+409203825 # Numbers
+409201541 # Pages
+497799835 # Xcode (Command Line Tools are enough)
