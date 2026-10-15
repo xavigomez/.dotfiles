@@ -17,6 +17,7 @@ brew "gh"
 brew "spotify_player"
 brew "oven-sh/bun/bun"
 brew "pi-coding-agent"
+brew "mas"
 
 cask "1password"
 cask "ghostty"
