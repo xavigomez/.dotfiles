@@ -58,3 +58,7 @@ herdr/.config/herdr/*.log
 herdr/.config/herdr/*.sock
 herdr/.config/herdr/release-notes.json
 herdr/.config/herdr/.plugins.lock
+
+# git: identity lives in local-only files next to the versioned config
+git/.config/git/config.local
+git/.config/git/playtomic
