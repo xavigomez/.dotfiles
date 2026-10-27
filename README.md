@@ -6,7 +6,8 @@ My personal dotfiles managed with GNU Stow.
 
 ```
 ~/.dotfiles/
-├── zsh/              # Zsh + Oh My Zsh + Powerlevel10k + herdr autostart
+├── zsh/              # Zsh (no framework) + herdr autostart
+├── starship/         # Starship prompt config
 ├── zed/              # Zed editor settings and keybindings
 ├── ghostty/          # Ghostty terminal emulator config
 ├── nvim/             # Neovim + LazyVim (extras via lazyvim.json)
@@ -208,11 +209,10 @@ The script will:
 2. Install Homebrew (if needed)
 3. Install GNU Stow (if needed)
 4. Run `brew bundle` to install all packages
-5. Install oh-my-zsh and plugins
-6. Use stow to create symlinks for: zsh, zed, nvim, claude, opencode, herdr, spotify-player, pi
-7. Link the Ghostty config
-8. Install herdr plugins (Herdrfile) and agent integrations (claude, opencode)
-9. Display next steps
+5. Use stow to create symlinks for: zsh, starship, zed, nvim, claude, opencode, herdr, spotify-player, pi, git
+6. Link the Ghostty config
+7. Install herdr plugins (Herdrfile) and agent integrations (claude, opencode)
+8. Display next steps
 
 ### Subsequent machines:
 
@@ -405,6 +405,6 @@ cd ~/.dotfiles && stow -n {package}
 ## Notes
 
 - **Ghostty config** is symlinked manually in `install.sh` (not via stow) because of the deeply nested `~/Library/Application Support/com.mitchellh.ghostty/` path. Use Example C above as the pattern for other macOS-specific paths.
-- **oh-my-zsh plugins/themes** are installed directly via git clone in `install.sh`, not tracked as submodules. This keeps things simple and lets them update independently.
+- **Zsh has no plugin framework.** The prompt is Starship and `zsh-autosuggestions` comes from Homebrew; the defaults oh-my-zsh used to provide (history, completion, key bindings, terminal title/OSC 7) are spelled out in `.zshrc`.
 - `.zsh_history`, `.zcompdump`, and other ephemeral files are gitignored automatically (see `.gitignore`).
 - **GNU Stow** is the only external dependency besides Homebrew. It's lightweight (~1MB) and installed automatically by `install.sh`.

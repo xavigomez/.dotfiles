@@ -15,137 +15,120 @@ if command -v herdr &>/dev/null && [[ "$HERDR_ENV" != "1" ]] && [[ "$TERM_PROGRA
   exit
 fi
 
-# Load the current directory's .envrc before instant prompt is enabled, so
-# direnv's "loading…" output lands in the pre-instant-prompt phase. The hook
-# installed at the bottom of this file handles future cd's.
-(( ${+commands[direnv]} )) && emulate zsh -c "$(direnv export zsh)"
-
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
-
-# If you come from bash you might have to change your $PATH.
-# export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
+# ---------------------------------------------------------------------------
+#  PATH
+# ---------------------------------------------------------------------------
+# brew shellenv also prepends Homebrew's site-functions to $fpath, so it must
+# run before compinit.
 eval "$(/opt/homebrew/bin/brew shellenv)"
 export PATH="/opt/homebrew/opt/rustup/bin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 
-# Path to your Oh My Zsh installation.
-export ZSH="$HOME/.oh-my-zsh"
+# ---------------------------------------------------------------------------
+#  Shell defaults
+# ---------------------------------------------------------------------------
+#  What oh-my-zsh's lib/ used to set up implicitly.
 
-# Set name of the theme to load --- if set to "random", it will
-# load a random theme each time Oh My Zsh is loaded, in which case,
-# to know which specific one was loaded, run: echo $RANDOM_THEME
-# See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-ZSH_THEME="powerlevel10k/powerlevel10k"
+# History
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=50000
+SAVEHIST=10000
+setopt extended_history hist_expire_dups_first hist_ignore_dups \
+  hist_ignore_space hist_verify share_history
 
-# Set list of themes to pick from when loading at random
-# Setting this variable when ZSH_THEME=random will cause zsh to load
-# a theme from this variable instead of looking in $ZSH/themes/
-# If set to an empty array, this variable will have no effect.
-# ZSH_THEME_RANDOM_CANDIDATES=( "robbyrussell" "agnoster" )
+# Directories (auto_cd is what makes a bare `..` work)
+setopt auto_cd auto_pushd pushd_ignore_dups pushdminus
 
-# Uncomment the following line to use case-sensitive completion.
-# CASE_SENSITIVE="true"
+# Misc
+setopt interactive_comments long_list_jobs multios
+unsetopt flow_control
 
-# Uncomment the following line to use hyphen-insensitive completion.
-# Case-sensitive completion must be off. _ and - will be interchangeable.
-# HYPHEN_INSENSITIVE="true"
+# Completion: menu on second tab, case-insensitive, partial-word matching.
+# The full compinit (with its ~25ms compaudit security check, which also picks
+# up newly installed completions) runs at most once a day; otherwise the
+# cached dump is trusted with -C.
+autoload -Uz compinit
+_zcompdump="${XDG_CACHE_HOME:-$HOME/.cache}/zcompdump"
+_fresh_dump=($_zcompdump(N.mh-24))
+if (( $#_fresh_dump )); then compinit -C -d "$_zcompdump"; else compinit -d "$_zcompdump"; fi
+unset _zcompdump _fresh_dump
+setopt auto_menu complete_in_word always_to_end
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list 'm:{[:lower:][:upper:]}={[:upper:][:lower:]}' 'r:|=*' 'l:|=* r:|=*'
+zstyle ':completion:*' special-dirs true
+zstyle ':completion:*' list-colors ''
+zstyle ':completion:*' use-cache yes
+zstyle ':completion:*' cache-path "${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
 
-# Uncomment one of the following lines to change the auto-update behavior
-# zstyle ':omz:update' mode disabled  # disable automatic updates
-# zstyle ':omz:update' mode auto      # update automatically without asking
-# zstyle ':omz:update' mode reminder  # just remind me to update when it's time
+# Key bindings: emacs mode, ↑/↓ search history by what's already typed
+bindkey -e
+autoload -Uz up-line-or-beginning-search down-line-or-beginning-search edit-command-line
+zle -N up-line-or-beginning-search
+zle -N down-line-or-beginning-search
+zle -N edit-command-line
+bindkey '^[[A' up-line-or-beginning-search
+bindkey '^[OA' up-line-or-beginning-search
+bindkey '^[[B' down-line-or-beginning-search
+bindkey '^[OB' down-line-or-beginning-search
+bindkey '^[[H' beginning-of-line
+bindkey '^[[F' end-of-line
+bindkey '^[[3~' delete-char
+bindkey '^[[Z' reverse-menu-complete
+bindkey '^[[1;5C' forward-word
+bindkey '^[[1;5D' backward-word
+bindkey '^X^E' edit-command-line
 
-# Uncomment the following line to change how often to auto-update (in days).
-# zstyle ':omz:update' frequency 13
+# Quote URLs as they're typed or pasted, so `?` and `&` don't trip globbing
+autoload -Uz bracketed-paste-magic url-quote-magic
+zle -N bracketed-paste bracketed-paste-magic
+zle -N self-insert url-quote-magic
 
-# Uncomment the following line if pasting URLs and other text is messed up.
-# DISABLE_MAGIC_FUNCTIONS="true"
+# ---------------------------------------------------------------------------
+#  Terminal integration
+# ---------------------------------------------------------------------------
+#  Previously oh-my-zsh's lib/termsupport.zsh:
+#  - Title: cwd while idle, command name while running.
+#  - OSC 7: report the cwd on every prompt. Herdr's pane shells don't get
+#    Ghostty's shell integration, so this is how herdr sees `cd` (and
+#    restores agents in the right directory). The URL host is left empty:
+#    herdr-radar's herdr-osc7.zsh found herdr ignores it otherwise.
+autoload -Uz add-zsh-hook
+_term_precmd() {
+  print -Pn '\e]2;%~\a'
+  printf '\e]7;file://%s\e\\' "$PWD"
+}
+_term_preexec() { print -rn -- $'\e]2;'"${1%% *}"$'\a' }
+add-zsh-hook precmd _term_precmd
+add-zsh-hook preexec _term_preexec
 
-# Uncomment the following line to disable colors in ls.
-# DISABLE_LS_COLORS="true"
-
-# Uncomment the following line to disable auto-setting terminal title.
-# DISABLE_AUTO_TITLE="true"
-
-# Uncomment the following line to enable command auto-correction.
-# ENABLE_CORRECTION="true"
-
-# Uncomment the following line to display red dots whilst waiting for completion.
-# You can also set it to another string to have that shown instead of the default red dots.
-# e.g. COMPLETION_WAITING_DOTS="%F{yellow}waiting...%f"
-# Caution: this setting can cause issues with multiline prompts in zsh < 5.7.1 (see #5765)
-# COMPLETION_WAITING_DOTS="true"
-
-# Uncomment the following line if you want to disable marking untracked files
-# under VCS as dirty. This makes repository status check for large repositories
-# much, much faster.
-# DISABLE_UNTRACKED_FILES_DIRTY="true"
-
-# Uncomment the following line if you want to change the command execution time
-# stamp shown in the history command output.
-# You can set one of the optional three formats:
-# "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
-# or set a custom format using the strftime function format specifications,
-# see 'man strftime' for details.
-# HIST_STAMPS="mm/dd/yyyy"
-
-# Would you like to use another custom folder than $ZSH/custom?
-# ZSH_CUSTOM=/path/to/new-custom-folder
-
-# Which plugins would you like to load?
-# Standard plugins can be found in $ZSH/plugins/
-# Custom plugins may be added to $ZSH_CUSTOM/plugins/
-# Example format: plugins=(rails git textmate ruby lighthouse)
-# Add wisely, as too many plugins slow down shell startup.
-plugins=(git zsh-autosuggestions)
-
-source $ZSH/oh-my-zsh.sh
-
-# User configuration
+# ---------------------------------------------------------------------------
+#  Tools & plugins
+# ---------------------------------------------------------------------------
 
 # fnm (Fast Node Manager)
 eval "$(fnm env --use-on-cd)"
 
-# export MANPATH="/usr/local/man:$MANPATH"
+# bun global binaries
+export PATH="$HOME/.bun/bin:$PATH"
 
-# You may need to manually set your language environment
-# export LANG=en_US.UTF-8
+[[ -r "$HOMEBREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]] &&
+  source "$HOMEBREW_PREFIX/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
 
-# Preferred editor for local and remote sessions
-# if [[ -n $SSH_CONNECTION ]]; then
-#   export EDITOR='vim'
-# else
-#   export EDITOR='nvim'
-# fi
+# direnv — installed before starship so it updates the env before the prompt
+# renders.
+(( ${+commands[direnv]} )) && emulate zsh -c "$(direnv hook zsh)"
 
-# Compilation flags
-# export ARCHFLAGS="-arch $(uname -m)"
-
-# Set personal aliases, overriding those provided by Oh My Zsh libs,
-# plugins, and themes. Aliases can be placed here, though Oh My Zsh
-# users are encouraged to define aliases within a top-level file in
-# the $ZSH_CUSTOM folder, with .zsh extension. Examples:
-# - $ZSH_CUSTOM/aliases.zsh
-# - $ZSH_CUSTOM/macos.zsh
-# For a full list of active aliases, run `alias`.
-#
-# Example aliases
+# ---------------------------------------------------------------------------
+#  Aliases
+# ---------------------------------------------------------------------------
+export CLICOLOR=1 # colored ls (oh-my-zsh aliased ls='ls -G')
+alias ll='ls -lh'
+alias la='ls -lAh'
 alias zshconfig="zed ~/.zshrc"
-alias omzconfig="zed ~/.oh-my-zsh"
 alias ghosttyconfig="zed $HOME/Library/Application Support/com.mitchellh.ghostty/config"
 alias v="nvim"
 
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-
-# direnv hook — silent at install time; the starting cwd's .envrc was already
-# exported above the instant prompt block.
-(( ${+commands[direnv]} )) && emulate zsh -c "$(direnv hook zsh)"
-
-# bun global binaries
-export PATH="$HOME/.bun/bin:$PATH"
+# ---------------------------------------------------------------------------
+#  Prompt — config in ~/.config/starship.toml
+# ---------------------------------------------------------------------------
+(( ${+commands[starship]} )) && eval "$(starship init zsh)"

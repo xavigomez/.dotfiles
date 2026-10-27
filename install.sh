@@ -144,51 +144,11 @@ if command -v fnm &>/dev/null; then
   echo "✓ LTS Node.js ($FNM_LTS) installed and set as default"
 fi
 
-# --- oh-my-zsh ---
-if [ ! -d "$HOME/.oh-my-zsh" ]; then
-  echo "📦 Installing oh-my-zsh..."
-  if [ "$VERBOSE" = true ]; then
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended --keep-zshrc
-  else
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended --keep-zshrc 2>/dev/null
-  fi
-  echo "✓ oh-my-zsh installed"
-else
-  echo "✓ oh-my-zsh is already installed"
-fi
-
-# --- oh-my-zsh plugins ---
-ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
-
-if [ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]; then
-  echo "📦 Installing zsh-autosuggestions plugin..."
-  if [ "$VERBOSE" = true ]; then
-    git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
-  else
-    git clone --quiet https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions" 2>/dev/null
-  fi
-  echo "✓ zsh-autosuggestions installed"
-else
-  echo "✓ zsh-autosuggestions is already installed"
-fi
-
-if [ ! -d "$ZSH_CUSTOM/themes/powerlevel10k" ]; then
-  echo "📦 Installing powerlevel10k theme..."
-  if [ "$VERBOSE" = true ]; then
-    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$ZSH_CUSTOM/themes/powerlevel10k"
-  else
-    git clone --quiet --depth=1 https://github.com/romkatv/powerlevel10k.git "$ZSH_CUSTOM/themes/powerlevel10k" 2>/dev/null
-  fi
-  echo "✓ powerlevel10k installed"
-else
-  echo "✓ powerlevel10k is already installed"
-fi
-
 # --- Stow dotfiles ---
 # No --adopt: it silently pulls whatever is in $HOME into the repo, which has
 # historically pulled live auth tokens into tracked files. If a conflict
 # happens, stow aborts the package and the user resolves it manually.
-STOW_PACKAGES=(zsh zed nvim claude opencode herdr spotify-player pi git)
+STOW_PACKAGES=(zsh starship zed nvim claude opencode herdr spotify-player pi git)
 
 if [ "$VERBOSE" = true ]; then
   STOW_FLAGS="--verbose=2"
@@ -316,7 +276,6 @@ echo "✅ Dotfiles bootstrapped successfully!"
 echo ""
 echo "📝 Next steps:"
 echo "   1. Restart your terminal or run: source ~/.zshrc"
-echo "   2. Configure powerlevel10k if needed: p10k configure"
-echo "   3. Spotify: cp ~/.config/spotify-player/app.example.toml ~/.config/spotify-player/app.toml, add your client_id, then run: spotify_player"
-echo "   4. Add a herdr plugin: echo 'owner/repo [--ref tag]' >> Herdrfile && ./install.sh"
+echo "   2. Spotify: cp ~/.config/spotify-player/app.example.toml ~/.config/spotify-player/app.toml, add your client_id, then run: spotify_player"
+echo "   3. Add a herdr plugin: echo 'owner/repo [--ref tag]' >> Herdrfile && ./install.sh"
 echo ""

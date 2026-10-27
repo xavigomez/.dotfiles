@@ -1,0 +1,4 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+# Starship defaults for now. Options: https://starship.rs/config/
+# Presets to start from: https://starship.rs/presets/
