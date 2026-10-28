@@ -10,6 +10,13 @@ return {
       vim.keymap.set("n", "<leader>cu", function()
         vim.cmd.RustLsp("runnables")
       end, { desc = "Rust Runnables", buffer = bufnr })
+      -- Full cargo-style error (arrows, notes, help) instead of the split-up virtual text.
+      vim.keymap.set("n", "<leader>cD", function()
+        vim.cmd.RustLsp("renderDiagnostic")
+      end, { desc = "Rust Render Diagnostic", buffer = bufnr })
+      vim.keymap.set("n", "<leader>ce", function()
+        vim.cmd.RustLsp("explainError")
+      end, { desc = "Rust Explain Error", buffer = bufnr })
     end
   end,
 }
