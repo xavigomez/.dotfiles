@@ -10,7 +10,7 @@ My personal dotfiles managed with GNU Stow.
 ├── zed/              # Zed editor settings and keybindings
 ├── ghostty/          # Ghostty terminal emulator config
 ├── nvim/             # Neovim + LazyVim (extras via lazyvim.json)
-├── claude/           # Claude Code settings and skills (hook path stays machine-agnostic)
+├── claude/           # Claude Code skills (settings.json stays local, see the herdr section)
 ├── opencode/         # OpenCode agent settings + TUI plugins
 ├── herdr/            # herdr agent multiplexer config (active settings only)
 ├── pi/               # pi coding agent settings (state stays untracked)
@@ -35,7 +35,7 @@ palette *is* the terminal theme — one change in Ghostty re-themes all of them:
 |---|---|---|
 | Ghostty (chrome) | `ghostty/config` → `theme = TokyoNight Moon` | — (defines the slots) |
 | herdr | `herdr/.config/herdr/config.toml` → `name = "tokyo-night"` | chrome (explicit match) |
-| claude code | `claude/.claude/settings.json` → `"theme": "dark-ansi"` | chrome |
+| claude code | `~/.claude/settings.json` (local, untracked) → `"theme": "dark-ansi"` | chrome |
 | lazygit (bare + in nvim) | snacks `configure = false` (see `nvim/.../plugins/snacks.lua`) | chrome |
 
 **Sovereign apps** render their own truecolor palette and ignore ANSI slots:
@@ -177,13 +177,14 @@ not tracked here. `install.sh` recreates them via
 `herdr integration install <target>`; check versions with
 `herdr integration status`.
 
-`claude/.claude/settings.json` **is** tracked, but must stay
-machine-agnostic: the herdr hook command uses `"$HOME/..."` (hook commands
-run through a shell, so it expands per machine) — never an absolute path.
-Two known rewriters: Claude Code re-serializes the file on every settings
-save (no-op diffs once the file is in its canonical format), and
-`herdr integration install claude` appends a duplicate absolute-path hook
-entry when re-run — delete the duplicate afterwards.
+`claude/.claude/settings.json` is **not** tracked (gitignored). Claude Code
+rewrites it on every settings change, including the auto-mode `environment`
+block it generates, which describes work infrastructure, and this repo is
+public. On this machine the file stays at that path, so the existing
+`~/.claude/settings.json` link keeps working; on a new machine Claude Code
+creates its own. `herdr integration install claude` (run by `install.sh`)
+adds the herdr hook to it; set the rest by hand or via `/config`:
+`"theme": "dark-ansi"`, `"editorMode": "vim"`, `"tui": "fullscreen"`.
 
 ## Installation
 

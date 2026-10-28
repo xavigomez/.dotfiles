@@ -65,3 +65,8 @@ git/.config/git/playtomic
 
 # claude: Claude Code's download cache of account/org skills
 claude/.claude/skills/synced/
+
+# claude: settings.json is local-only. Claude Code rewrites it on every settings
+# change, including the auto-mode environment it generates from work projects,
+# and this repo is public.
+claude/.claude/settings.json
