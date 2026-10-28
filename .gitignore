@@ -62,3 +62,6 @@ herdr/.config/herdr/.plugins.lock
 # git: identity lives in local-only files next to the versioned config
 git/.config/git/config.local
 git/.config/git/playtomic
+
+# claude: Claude Code's download cache of account/org skills
+claude/.claude/skills/synced/
