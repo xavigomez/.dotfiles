@@ -1,7 +1,8 @@
 # version: 1.0.0
 "$schema" = 'https://starship.rs/config-schema.json'
 
-add_newline = true
+# Off: .zshrc adds the gap between prompts itself, minus the first one.
+add_newline = false
 continuation_prompt = "[▸▹ ](dimmed white)"
 
 format = """$username[ in ](italic dimmed white)${custom.dir} $nix_shell$container$fill$git_branch$git_commit$git_state${custom.worktree}$git_status$git_metrics
@@ -157,15 +158,15 @@ threshold = 70
 style = "italic dimmed yellow"
 
 [git_branch]
-format = "[$branch(:$remote_branch)]($style) "
+format = " [$branch(:$remote_branch)]($style)"
 symbol = "[△](bold italic bright-blue)"
 style = "italic bright-blue"
 truncation_symbol = "⋯"
-truncation_length = 40
+truncation_length = 30
 only_attached = true
 
 [git_metrics]
-format = '([▴$added ]($added_style))([▿$deleted]($deleted_style))'
+format = '( [▴$added]($added_style))( [▿$deleted]($deleted_style))'
 added_style = 'italic green'
 deleted_style = 'italic red'
 ignore_submodules = true
@@ -177,16 +178,16 @@ disabled = false
 # ◪ conflicted, ⇡/⇣ ahead/behind. Stashes are not shown.
 style = "italic"
 format = '([$conflicted$staged$modified$renamed$deleted$untracked$ahead_behind]($style))'
-conflicted = "[◪${count} ](italic bright-magenta)"
-staged = "[▪${count} ](italic bright-cyan)"
-modified = "[●${count} ](italic yellow)"
-renamed = "[◎${count} ](italic bright-blue)"
-deleted = "[✕${count} ](italic red)"
-untracked = "[◌${count} ](italic bright-yellow)"
+conflicted = "[ ◪${count}](italic bright-magenta)"
+staged = "[ ▪${count}](italic bright-cyan)"
+modified = "[ ●${count}](italic yellow)"
+renamed = "[ ◎${count}](italic bright-blue)"
+deleted = "[ ✕${count}](italic red)"
+untracked = "[ ◌${count}](italic bright-yellow)"
 stashed = ""
-ahead = "[⇡${count} ](italic green)"
-behind = "[⇣${count} ](italic red)"
-diverged = "[⇡${ahead_count}⇣${behind_count} ](italic bright-magenta)"
+ahead = "[ ⇡${count}](italic green)"
+behind = "[ ⇣${count}](italic red)"
+diverged = "[ ⇡${ahead_count}⇣${behind_count}](italic bright-magenta)"
 
 [deno]
 format = " [deno](italic) [∫ $version](green bold)"
@@ -345,14 +346,15 @@ symbol = "◇ "
 format = " spack [$symbol$environment]($style)"
 
 [custom.worktree]
-# Name of the linked git worktree, when in one: walks up to the nearest .git
-# and checks whether it's a worktree pointer file. Shell builtins only.
-command = 'd=$PWD; while :; do if [ -f "$d/.git" ]; then read -r l < "$d/.git"; [[ $l == */worktrees/* ]] && printf %s "${d##*/}"; exit; fi; [ -d "$d/.git" ] && exit; [ -z "$d" ] && exit; d=${d%/*}; done'
+# Name of the linked git worktree (capped at 20 chars), when in one: walks up
+# to the nearest .git and checks whether it's a worktree pointer file. Shell
+# builtins only.
+command = 'd=$PWD; while :; do if [ -f "$d/.git" ]; then read -r l < "$d/.git"; [[ $l == */worktrees/* ]] && { n=${d##*/}; [ ${#n} -gt 20 ] && n="${n:0:19}…"; printf %s "$n"; }; exit; fi; [ -d "$d/.git" ] && exit; [ -z "$d" ] && exit; d=${d%/*}; done'
 when = true
 require_repo = true
 shell = ["bash", "--noprofile", "--norc"]
 style = "italic bright-magenta"
-format = "([⧉ $output]($style) )"
+format = "( [⧉ $output]($style))"
 
 [username]
 # Always shown, top-left before the folder: "goorie in .dotfiles".
@@ -360,3 +362,9 @@ show_always = true
 style_user = "italic bright-yellow"
 style_root = "bold italic purple"
 format = "[$user]($style)"
+
+[git_commit]
+format = ' [\($hash$tag\)]($style)'
+
+[git_state]
+format = ' \([$state( $progress_current/$progress_total)]($style)\)'

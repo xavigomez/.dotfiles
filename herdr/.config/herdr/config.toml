@@ -41,6 +41,10 @@ split_vertical = "prefix+|"
 [ui]
 # Show detected agent names (claude, pi, opencode…) on pane borders.
 show_agent_labels_on_pane_borders = true
+# No scrollbar column beside panes: it took a column from the shell, so
+# right-aligned prompt content stopped short of the border. Mouse-wheel
+# scrolling is unaffected.
+pane_scrollbars = false
 
 [ui.sound]
 # Alert sounds when background agents need attention or finish.

@@ -202,6 +202,13 @@ OSC 7: herdr's pane shells don't get Ghostty's shell integration, so that's how
 herdr sees `cd` (and restores agents in the right directory).
 `zsh-autosuggestions` comes from Homebrew. Startup is ~80 ms.
 
+Two prompt-layout details also live in `.zshrc`: the blank line between
+prompts (a hook instead of starship's `add_newline`, so there's none above the
+first prompt in a pane or after `clear`), and `ZLE_RPROMPT_INDENT=0` so the
+right prompt ends flush with the top line. herdr's `pane_scrollbars = false`
+is part of the same fix: the scrollbar column made right-aligned content stop
+short of the pane border.
+
 ### Prompt
 
 [Starship](https://starship.rs), starting from the `jetpack` preset and trimmed
@@ -215,7 +222,7 @@ sudo ▸                                                     8m40s 15:39
 | Where | What |
 |---|---|
 | Top left | `<user> in <folder>`: folder name only, capped at 20 characters (`~` at home) |
-| Top right | Git block, only inside a repo: branch (up to 40 characters, `main` included), `⧉ <name>` in a linked worktree, then file and line counts |
+| Top right | Git block, only inside a repo: branch (up to 30 characters, `main` included), `⧉ <name>` in a linked worktree (up to 20), then file and line counts |
 | Bottom left | `sudo` while sudo credentials are cached, then `▸` (green) after success or a hollow `▹` (red) after a failure |
 | Bottom right | Language versions inside a project (jetpack's), the last command's duration when over 2 s, the clock |
 

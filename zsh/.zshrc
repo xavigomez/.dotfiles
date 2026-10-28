@@ -131,4 +131,17 @@ alias v="nvim"
 # ---------------------------------------------------------------------------
 #  Prompt — config in ~/.config/starship.toml
 # ---------------------------------------------------------------------------
+# Right prompt touches the last column, flush with the top line's git block
+# (zsh's default keeps it one column in).
+ZLE_RPROMPT_INDENT=0
+
+# Blank line between prompts, but not above the first prompt in a pane or the
+# one right after `clear`/`reset` (starship's add_newline pads those too, so
+# it's off). Hooks each see the real $?, so this doesn't touch the prompt's
+# success/failure state.
+_prompt_gap_precmd() { [[ -n $_prompt_gap ]] && print; _prompt_gap=1 }
+_prompt_gap_preexec() { [[ $1 == (clear|reset)(|' '*) ]] && unset _prompt_gap }
+add-zsh-hook precmd _prompt_gap_precmd
+add-zsh-hook preexec _prompt_gap_preexec
+
 (( ${+commands[starship]} )) && eval "$(starship init zsh)"
