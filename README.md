@@ -38,6 +38,7 @@ palette *is* the terminal theme — one change in Ghostty re-themes all of them:
 | herdr | `herdr/.config/herdr/config.toml` → `name = "tokyo-night"` | chrome (explicit match) |
 | claude code | `~/.claude/settings.json` (local, untracked) → `"theme": "dark-ansi"` | chrome |
 | lazygit (bare + in nvim) | snacks `configure = false` (see `nvim/.../plugins/snacks.lua`) | chrome |
+| starship | `starship/.config/starship.toml` → ANSI color names only, no hex | chrome |
 
 **Sovereign apps** render their own truecolor palette and ignore ANSI slots:
 
@@ -94,7 +95,7 @@ SchemaStore, conform, nvim-lint, …) is stock — only the deltas below are our
 | `snacks.nvim` | `plugins/snacks.lua` | ① terminal `<C-hjkl>` routed through the herdr navigator (floating terminals keep stock behavior, so the key reaches the shell inside); ② lazygit `configure = false` so stock lazygit inherits terminal chrome (see Theming), with the `rounded` border restored that snacks drops; ③ file and explorer pickers show hidden **and** ignored files, excluding `node_modules` and `.git`. |
 | `nvim-lspconfig` | `plugins/lsp.lua` | `cssls` and `emmet_language_server` (LazyVim still ships no `lang.css` extra as of v16); plus a `vtsls` `publishDiagnostics` handler that drops TS unused-symbol hints (6133/6192/6196/6198) when eslint is attached to the buffer, so the same unused variable isn't reported twice — write-up in `docs/nvim-vtsls-eslint-dedupe.md`. |
 | `nvim-treesitter` | `plugins/lsp.lua` | Parsers no extra covers: `scss`, `jsonc`. |
-| `rustaceanvim` | `plugins/rustaceanvim.lua` | Buffer-local `<leader>cu` → `:RustLsp runnables`, chained onto the extra's own `on_attach` instead of replacing it. |
+| `rustaceanvim` | `plugins/rustaceanvim.lua` | Buffer-local `<leader>cu` → `:RustLsp runnables`, `<leader>cD` → `:RustLsp renderDiagnostic` (the full cargo-style error instead of split-up virtual text), `<leader>ce` → `:RustLsp explainError`, chained onto the extra's own `on_attach` instead of replacing it. |
 | `LazyVim/LazyVim` | `plugins/tokyoppuccin.lua` | `colorscheme = "tokyoppuccin"`. |
 
 ### Config (`lua/config/`)
@@ -137,6 +138,8 @@ SchemaStore, conform, nvim-lint, …) is stock — only the deltas below are our
 | `<leader>uk` / `<leader>uK` | n | `:CloakToggle` / `:CloakPreviewLine` |
 | `<leader>uB` | n | Toggle gitsigns inline blame |
 | `<leader>cu` | n (rust buffers) | `:RustLsp runnables` |
+| `<leader>cD` | n (rust buffers) | `:RustLsp renderDiagnostic` — full cargo-style error |
+| `<leader>ce` | n (rust buffers) | `:RustLsp explainError` |
 
 `<leader>u*` is LazyVim's ui/toggle group, so the new toggles show up in the
 which-key list next to the stock ones.
@@ -186,6 +189,53 @@ public. On this machine the file stays at that path, so the existing
 creates its own. `herdr integration install claude` (run by `install.sh`)
 adds the herdr hook to it; set the rest by hand or via `/config`:
 `"theme": "dark-ansi"`, `"editorMode": "vim"`, `"tui": "fullscreen"`.
+
+## zsh & prompt
+
+Plain zsh, no plugin framework. `.zshrc` spells out what oh-my-zsh's `lib/`
+used to set up implicitly: history options, completion (case-insensitive, menu
+on the second tab; the full `compinit` security audit runs at most once a day,
+otherwise the cached dump is trusted with `-C`), emacs key bindings with ↑/↓
+prefix history search, and URL quoting on paste. oh-my-zsh's termsupport is
+replaced by a small hook that sets the window title and reports the cwd via
+OSC 7: herdr's pane shells don't get Ghostty's shell integration, so that's how
+herdr sees `cd` (and restores agents in the right directory).
+`zsh-autosuggestions` comes from Homebrew. Startup is ~80 ms.
+
+### Prompt
+
+[Starship](https://starship.rs), starting from the `jetpack` preset and trimmed
+to what earns its place:
+
+```
+goorie in .dotfiles                 feat/x ⧉ my-worktree ●3 ◌2 ▴40 ▿4
+sudo ▸                                                     8m40s 15:39
+```
+
+| Where | What |
+|---|---|
+| Top left | `<user> in <folder>`: folder name only, capped at 20 characters (`~` at home) |
+| Top right | Git block, only inside a repo: branch (up to 40 characters, `main` included), `⧉ <name>` in a linked worktree, then file and line counts |
+| Bottom left | `sudo` while sudo credentials are cached, then `▸` (green) after success or a hollow `▹` (red) after a failure |
+| Bottom right | Language versions inside a project (jetpack's), the last command's duration when over 2 s, the clock |
+
+Git symbols: `●` modified · `◌` untracked · `▪` staged · `✕` deleted ·
+`◎` renamed · `◪` conflicts · `▴`/`▿` lines added/deleted · `⇡`/`⇣` ahead of /
+behind the remote. Stashes are deliberately left out.
+
+Two segments are custom modules, run on every prompt with shell builtins only:
+the capped folder name (~6 ms; the built-in `directory` module truncates by
+path segments, not characters) and the worktree marker (~14 ms; Starship has
+no worktree module). The hostname is deliberately absent: this config lives on
+one machine, so the user is the part worth showing. For remote sessions, add
+`[hostname]` with `ssh_only = true` to show it only over SSH.
+
+To try another look: a preset is just a complete `starship.toml`, so
+`starship preset <name> --force -o starship/.config/starship.toml`, and
+`git checkout` brings this one back. Avoid theme switchers that "apply" by
+replacing `~/.config/starship.toml` (stellar does): that breaks the stow link.
+`starship explain` and `starship timings` show what each segment is and what
+it costs.
 
 ## Installation
 
