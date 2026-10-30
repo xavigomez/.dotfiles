@@ -1,0 +1,26 @@
+# helix configuration — active settings only.
+# Defaults: https://docs.helix-editor.com/editor.html — only deviations
+# from defaults belong here.
+
+# Built-in tokyonight_moon (bg already ghostty's #222436, see README Theming)
+# with dimmed diagnostics and inlay hints, in themes/
+theme = "tokyonight_moon_dim"
+
+[editor]
+line-number = "relative"
+cursorline = true
+color-modes = true
+# Same as LazyVim's clipboard=unnamedplus: y/d/p go through the system clipboard.
+default-yank-register = "+"
+# Helix's newer diagnostic rendering, with the docs' recommended levels.
+end-of-line-diagnostics = "hint"
+
+[editor.inline-diagnostics]
+cursor-line = "warning"
+
+[editor.lsp]
+display-inlay-hints = true
+
+[editor.cursor-shape]
+insert = "bar"
+select = "underline"

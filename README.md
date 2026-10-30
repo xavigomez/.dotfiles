@@ -11,6 +11,7 @@ My personal dotfiles managed with GNU Stow.
 ├── zed/              # Zed editor settings and keybindings
 ├── ghostty/          # Ghostty terminal emulator config
 ├── nvim/             # Neovim + LazyVim (extras via lazyvim.json)
+├── helix/            # Helix editor, trialed for Rust next to nvim
 ├── claude/           # Claude Code skills (settings.json stays local, see the herdr section)
 ├── opencode/         # OpenCode agent settings + TUI plugins
 ├── herdr/            # herdr agent multiplexer config (active settings only)
@@ -45,6 +46,7 @@ palette *is* the terminal theme — one change in Ghostty re-themes all of them:
 | App | Palette | Source |
 |---|---|---|
 | nvim | Tokyoppuccin Storm (Catppuccin-flavored Tokyo Night, bg matched to chrome `#222436`) | `EmmanuelVernet/tokyoppuccin.nvim` via `nvim/.../plugins/tokyoppuccin.lua` |
+| helix | built-in `tokyonight_moon` (bg already the chrome's `#222436`) with dimmed diagnostics and inlay hints | `helix/.config/helix/themes/tokyonight_moon_dim.toml` |
 | opencode | its own built-in default theme | unset — follows nothing |
 
 Notes:
@@ -157,6 +159,25 @@ Deviations that existed and were removed, so they don't get re-litigated:
 | `defaults.lazy = false` | `46ebeb6` | Eager-loading every custom plugin defeats LazyVim's architecture and makes each `event = "LazyFile"` a no-op. A plugin that misbehaves lazy-loaded gets a per-plugin fix instead. |
 | `require("config.keymaps")` inside `lazy.lua` | `774d647` | It loaded user keymaps during startup while LazyVim loads its own on `VeryLazy`, inverting the order so LazyVim's defaults silently won every collision (reproduced with `<C-h>`). |
 | `number`, `relativenumber`, `expandtab`, `shiftwidth`, `tabstop` in `options.lua` | `5d51794` | All already LazyVim defaults — restating them hid which options were genuine deviations. |
+
+## helix
+
+Second editor, trialed for Rust next to nvim. `config.toml` and
+`languages.toml` keep deviations from defaults only. Motions and keys
+against vim/LazyVim: `docs/cheatsheets/helix.md`.
+
+- **Rust needs no plugin**: helix finds `rust-analyzer` on `PATH` (the
+  rustup shim from `.zshrc`, components from `install.sh`) and runs rustfmt
+  on save by default. `languages.toml` switches the save-time check to
+  clippy — more than nvim gets, since LazyVim's rust extra only enables
+  `checkOnSave` (plain `cargo check`). `hx --health rust` verifies it; the
+  `lldb-dap` ✘ there is the debugger, which isn't set up.
+- `default-yank-register = "+"` mirrors LazyVim's `clipboard=unnamedplus`.
+- **No `ctrl+hjkl` herdr handoff** — that's `herdr-navigator.lua`, nvim
+  only. Splits move with `ctrl+w hjkl`; herdr panes with herdr's own
+  `ctrl+alt+hjkl`, which works from inside `hx` too.
+- **Removing it**: `stow -D helix` *before* `git revert` (stow needs the
+  package dir to know what to unlink), then `brew uninstall helix`.
 
 
 ## herdr

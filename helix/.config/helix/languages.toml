@@ -1,0 +1,9 @@
+# Overrides merged over helix's built-in languages.toml — only deviations
+# belong here. rust-analyzer itself comes from rustup (install.sh) via the
+# shim on PATH; rustfmt-on-save is already a helix default for rust.
+
+[language-server.rust-analyzer.config]
+# Clippy instead of rust-analyzer's default `cargo check`. More than nvim
+# gets: LazyVim's rust extra only enables checkOnSave, i.e. plain check.
+check.command = "clippy"
+cargo.allFeatures = true

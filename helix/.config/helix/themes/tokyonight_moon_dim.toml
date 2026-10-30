@@ -1,0 +1,16 @@
+# tokyonight_moon with dimmed diagnostics and inlay hints. Stock reuses the
+# bright syntax yellow/teal for them, so context text reads like code.
+inherits = "tokyonight_moon"
+
+# Inlay hints and hints read as comments: the theme's comment grey, no box.
+"ui.virtual.inlay-hint" = { fg = "comment" }
+
+error = { fg = "#a9404e" }
+warning = { fg = "#b88f55" }
+info = { fg = "#4f8fa6" }
+hint = { fg = "comment" }
+
+"diagnostic.error" = { underline = { style = "curl", color = "#a9404e" } }
+"diagnostic.warning" = { underline = { style = "curl", color = "#b88f55" } }
+"diagnostic.info" = { underline = { style = "curl", color = "#4f8fa6" } }
+"diagnostic.hint" = { underline = { style = "curl", color = "comment" } }
