@@ -4,6 +4,13 @@ return {
   {
     "neovim/nvim-lspconfig",
       opts = {
+        -- Helix-style: the cursor line's diagnostics expand below it as
+        -- virtual lines; every other line keeps the end-of-line text. Merges
+        -- over LazyVim's virtual_text (spacing, prefix). Colors: tokyoppuccin.lua.
+        diagnostics = {
+          virtual_text = { current_line = false },
+          virtual_lines = { current_line = true },
+        },
         servers = {
           -- LazyVim has no CSS extra, so cssls is configured by hand.
           cssls = {},

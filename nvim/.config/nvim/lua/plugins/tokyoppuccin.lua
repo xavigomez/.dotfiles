@@ -20,6 +20,16 @@ return {
         hl.NeoTreeNormal = { fg = colors.fg, bg = colors.bg }
         hl.NeoTreeNormalNC = { fg = colors.fg, bg = colors.bg }
         hl.NeoTreeEndOfBuffer = { bg = colors.bg }
+        -- Closed (end-of-line) diagnostics dimmed toward the bg so they read
+        -- as context; the expanded virtual lines (DiagnosticVirtualLines*)
+        -- keep the full colors. See diagnostics in lsp.lua.
+        local dim = function(c)
+          return { fg = require("tokyoppuccin.util").blend_bg(colors, c, 0.6) }
+        end
+        hl.DiagnosticVirtualTextError = dim(colors.red)
+        hl.DiagnosticVirtualTextWarn = dim(colors.yellow)
+        hl.DiagnosticVirtualTextInfo = dim(colors.diag_info)
+        hl.DiagnosticVirtualTextHint = dim(colors.hint)
       end,
     },
   },
