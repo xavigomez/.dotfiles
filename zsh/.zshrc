@@ -145,3 +145,12 @@ add-zsh-hook precmd _prompt_gap_precmd
 add-zsh-hook preexec _prompt_gap_preexec
 
 (( ${+commands[starship]} )) && eval "$(starship init zsh)"
+
+# Inside Neovim's :terminal, keep both prompt lines one column off the right
+# edge. When a hidden terminal is shown again, Neovim moves the cursor to the
+# end of the row above the prompt if that row reaches the last column, which
+# the $fill top line always does. Herdr panes keep the flush edge.
+if [[ -n $NVIM ]]; then
+  ZLE_RPROMPT_INDENT=1
+  PROMPT=${PROMPT/--terminal-width=\"\$COLUMNS\"/--terminal-width=\"\$((COLUMNS-1))\"}
+fi
