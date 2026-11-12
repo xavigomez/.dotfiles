@@ -22,11 +22,8 @@ rename_tab = "prefix+,"
 goto = "prefix+s"
 settings = "prefix+shift+s"
 
-# Prefix-free pane navigation on herdr's docs-recommended ctrl+alt family:
-# herdr intercepts it before pane apps, so it works from everywhere — shells,
-# agent TUIs, even from inside nvim as a jump-out. Plain ctrl+hjkl stays free
-# for nvim (see nvim/.config/nvim/lua/config/herdr-navigator.lua), which
-# hands off to herdr at its splits' edges.
+# Native Herdr pane navigation; Ctrl+hjkl stays inside Neovim.
+# Desktop window shortcuts live in macos.sh.
 focus_pane_left = ["prefix+h", "ctrl+alt+h"]
 focus_pane_down = ["prefix+j", "ctrl+alt+j"]
 focus_pane_up = ["prefix+k", "ctrl+alt+k"]

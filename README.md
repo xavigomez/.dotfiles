@@ -21,6 +21,7 @@ My personal dotfiles managed with GNU Stow.
 ├── Herdrfile         # Declarative herdr plugin list (pinned via --ref)
 ├── Brewfile          # Homebrew packages and casks
 ├── install.sh        # Bootstrap script
+├── macos.sh          # Native window shortcuts, applied by install.sh
 ├── .gitignore        # Git ignore patterns
 └── README.md         # This file
 ```
@@ -64,6 +65,40 @@ Notes:
   built-in `TokyoNight Moon` theme, herdr `tokyo-night`, and tokyonight.nvim
   generates configs for most tools (`:TokyoNight` extras).
 
+## macOS window shortcuts
+
+`install.sh` runs the small `macos.sh` script to configure native window
+commands instead of Rectangle. Requires macOS 15+ and English menu names.
+
+| Shortcut | Native menu command |
+|---|---|
+| Ctrl+Option+Return | Window → Fill (maximize, not fullscreen) |
+| Ctrl+Option+← | Window → Move & Resize → Left |
+| Ctrl+Option+→ | Window → Move & Resize → Right |
+| Ctrl+Option+F | Enter/exit native fullscreen (own Space, separate from Fill) |
+
+```sh
+./macos.sh  # Reapply after editing the bindings; also run by install.sh
+```
+
+The script uses Apple's `defaults -dict-add` to set only these menu shortcuts,
+preserving unrelated preferences. They survive reboots; no daemon, startup
+hook, plist symlink, or Accessibility permission is needed. Reopen affected
+apps after changing bindings. Exit fullscreen before using desktop halves.
+
+To inspect, change or remove individual bindings, use **System Settings →
+Keyboard → Keyboard Shortcuts → App Shortcuts → All Applications**.
+
+Rectangle is no longer in the Brewfile. An existing copy is not automatically
+uninstalled: quit it, then remove the Homebrew cask once if desired:
+
+```sh
+brew uninstall --cask rectangle
+```
+
+Do not leave it running: its default Ctrl+Option+J/K bindings conflict with
+Herdr navigation, and Return/arrows conflict with the native window controls.
+
 ## nvim
 
 LazyVim, with every deviation from stock living in `nvim/.config/nvim/` and
@@ -94,7 +129,7 @@ SchemaStore, conform, nvim-lint, …) is stock — only the deltas below are our
 | Plugin | Spec | Delta |
 |---|---|---|
 | `gitsigns.nvim` | `plugins/gitsigns.lua` | Inline blame on by default — 300 ms delay, `<author>, <relative time>` format. |
-| `snacks.nvim` | `plugins/snacks.lua` | ① terminal `<C-hjkl>` routed through the herdr navigator (floating terminals keep stock behavior, so the key reaches the shell inside); ② lazygit `configure = false` so stock lazygit inherits terminal chrome (see Theming), with the `rounded` border restored that snacks drops; ③ file and explorer pickers show hidden **and** ignored files, excluding `node_modules` and `.git`. |
+| `snacks.nvim` | `plugins/snacks.lua` | ① lazygit `configure = false` so stock lazygit inherits terminal chrome (see Theming), with the `rounded` border restored that snacks drops; ② file and explorer pickers show hidden **and** ignored files, excluding `node_modules` and `.git`. Window/terminal navigation uses LazyVim defaults. |
 | `nvim-lspconfig` | `plugins/lsp.lua` | `cssls` and `emmet_language_server` (LazyVim still ships no `lang.css` extra as of v16); plus a `vtsls` `publishDiagnostics` handler that drops TS unused-symbol hints (6133/6192/6196/6198) when eslint is attached to the buffer, so the same unused variable isn't reported twice — write-up in `docs/nvim-vtsls-eslint-dedupe.md`. |
 | `nvim-treesitter` | `plugins/lsp.lua` | Parsers no extra covers: `scss`, `jsonc`. |
 | `rustaceanvim` | `plugins/rustaceanvim.lua` | Buffer-local `<leader>cu` → `:RustLsp runnables`, `<leader>cD` → `:RustLsp renderDiagnostic` (the full cargo-style error instead of split-up virtual text), `<leader>ce` → `:RustLsp explainError`, chained onto the extra's own `on_attach` instead of replacing it. |
@@ -111,11 +146,9 @@ SchemaStore, conform, nvim-lint, …) is stock — only the deltas below are our
   leaves `softtabstop` at Neovim's `0`, so `<Tab>`/`<BS>` move by 2 as well.
 - **Visual `p` doesn't clobber the paste register** (`keymaps.lua`): the
   standard `"_dP` idiom, so pasting over a selection repeatedly keeps working.
-- **`<C-hjkl>` crosses nvim splits *and* herdr panes** (`keymaps.lua` +
-  `herdr-navigator.lua`, ~90 lines): vim-tmux-navigator style — move the split;
-  at nvim's edge step into a float parked on that side (explorer sidebar,
-  pickers), which `wincmd` ignores; then hand off to `herdr pane focus`. Full
-  rationale in the herdr section.
+- **Window navigation stays stock**: LazyVim's `<C-hjkl>` moves editor splits
+  in normal mode and inline Snacks terminals. Pickers and floating terminals
+  keep their normal controls; there is no Herdr edge handoff or custom adapter.
 - **No `autocmds.lua`**: the starter ships one; we have none, so LazyVim's
   stock autocmds run unmodified.
 - **`lazy.lua` is the LazyVim starter template with exactly three edits**:
@@ -135,7 +168,6 @@ SchemaStore, conform, nvim-lint, …) is stock — only the deltas below are our
 
 | Key | Mode | Action |
 |---|---|---|
-| `<C-h/j/k/l>` | n, t | Move across nvim splits → floats → herdr panes |
 | `p` | x | Paste over selection without clobbering the register |
 | `<leader>uk` / `<leader>uK` | n | `:CloakToggle` / `:CloakPreviewLine` |
 | `<leader>uB` | n | Toggle gitsigns inline blame |
@@ -173,9 +205,8 @@ against vim/LazyVim: `docs/cheatsheets/helix.md`.
   `checkOnSave` (plain `cargo check`). `hx --health rust` verifies it; the
   `lldb-dap` ✘ there is the debugger, which isn't set up.
 - `default-yank-register = "+"` mirrors LazyVim's `clipboard=unnamedplus`.
-- **No `ctrl+hjkl` herdr handoff** — that's `herdr-navigator.lua`, nvim
-  only. Splits move with `ctrl+w hjkl`; herdr panes with herdr's own
-  `ctrl+alt+hjkl`, which works from inside `hx` too.
+- **Separate navigation layers** — Helix splits move with `ctrl+w hjkl`;
+  Herdr panes use `ctrl+alt+hjkl`, which works from inside `hx` too.
 - **Removing it**: `stow -D helix` *before* `git revert` (stow needs the
   package dir to know what to unlink), then `brew uninstall helix`.
 
@@ -189,12 +220,22 @@ active settings only; herdr's own docs cover the defaults.
 
 ### Pane navigation
 
-herdr panes move with `ctrl+alt+hjkl` (herdr's docs-recommended prefix-free
-family — herdr intercepts the chord before pane apps, so it works from
-anywhere, including agent TUIs and from inside nvim as a jump-out).
-`ctrl+hjkl` is left free for nvim: `nvim/lua/config/herdr-navigator.lua`
-moves nvim splits with it and hands off to herdr (`herdr pane focus
---direction … --current`) at nvim's edge, vim-tmux-navigator style.
+Two independent layers, with no automatic edge handoff:
+
+- **`ctrl+alt+hjkl`** (Control+Option on macOS) moves Herdr panes directly,
+  from any pane app. `prefix+hjkl` remains available too.
+- **`ctrl+hjkl`** uses stock LazyVim window navigation inside Neovim. Herdr
+  never intercepts these keys; there is no automatic handoff at editor edges.
+
+Pickers keep their stock list controls, and floating terminals use Ctrl+/ to
+hide. No extra navigation mappings or LSP overrides are needed.
+
+Desktop windows use Ctrl+Option+Return/arrows/F, configured during installation
+by `macos.sh`. These do not claim hjkl; see [macOS window shortcuts](#macos-window-shortcuts).
+
+After reviewing navigation changes, restart Neovim and press **Ctrl+B, then
+`r`** to reload both Herdr's client and server configuration. No pane/server
+restart is needed.
 
 The claude-code/opencode session-reporting hooks (`herdr-agent-state.*`) are
 **herdr-managed files** — updating an integration rewrites them — so they are
@@ -270,6 +311,7 @@ it costs.
 ### Prerequisites
 
 On a **factory-reset Mac**, the script handles everything, but be aware:
+- **macOS 15+ and English menu names** are required for the native window shortcuts.
 - **Xcode Command Line Tools** will be installed first (required for Homebrew). This takes a few minutes and may show a system dialog.
 - Apple Silicon Macs (`/opt/homebrew`) and Intel Macs (`/usr/local`) both supported automatically.
 
@@ -287,10 +329,11 @@ The script will:
 2. Install Homebrew (if needed)
 3. Install GNU Stow (if needed)
 4. Run `brew bundle` to install all packages
-5. Use stow to create symlinks for: zsh, starship, zed, nvim, claude, opencode, herdr, spotify-player, pi, git
-6. Link the Ghostty config
-7. Install herdr plugins (Herdrfile) and agent integrations (claude, opencode)
-8. Display next steps
+5. Use stow to create symlinks for: zsh, starship, zed, nvim, helix, claude, opencode, herdr, spotify-player, pi, git
+6. Link the Ghostty and Lazygit configs
+7. Apply native macOS window shortcuts via `macos.sh` (replaces Rectangle)
+8. Install herdr plugins (Herdrfile) and agent integrations (claude, opencode)
+9. Display next steps
 
 ### Subsequent machines:
 

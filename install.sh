@@ -187,6 +187,12 @@ mkdir -p "$HOME/Library/Application Support/lazygit"
 ln -sfn "$DOTFILES_DIR/lazygit/config.yml" "$HOME/Library/Application Support/lazygit/config.yml"
 echo "  ✓ Lazygit config linked"
 
+# --- macOS window shortcuts ---
+echo ""
+echo "⌨️  Configuring native macOS window shortcuts..."
+"$DOTFILES_DIR/macos.sh" apply
+echo "  ✓ Native window shortcuts configured"
+
 # --- Herdr plugins ---
 # Best-effort: herdr is installed by the Brewfile mid-bootstrap, so a fresh
 # shell may not have it on PATH yet on first run. Never abort the bootstrap on
@@ -278,4 +284,5 @@ echo "📝 Next steps:"
 echo "   1. Restart your terminal or run: source ~/.zshrc"
 echo "   2. Spotify: cp ~/.config/spotify-player/app.example.toml ~/.config/spotify-player/app.toml, add your client_id, then run: spotify_player"
 echo "   3. Add a herdr plugin: echo 'owner/repo [--ref tag]' >> Herdrfile && ./install.sh"
+echo "   4. Reopen GUI apps to activate native window shortcuts (Ctrl+Option+Return/←/→/F)"
 echo ""
