@@ -12,6 +12,7 @@ done
 
 DOTFILES_DIR="$HOME/.dotfiles"
 cd "$DOTFILES_DIR"
+source "$DOTFILES_DIR/lib/opencode.sh"
 
 echo "🚀 Bootstrapping dotfiles..."
 echo ""
@@ -60,6 +61,7 @@ else
   brew bundle install --file="$DOTFILES_DIR/Brewfile" --quiet 2>/dev/null || brew bundle install --file="$DOTFILES_DIR/Brewfile"
 fi
 echo "✓ Brewfile dependencies installed"
+opencode_require_v2
 
 # --- Remove stock App Store apps ---
 # Best-effort: uninstalls the apps listed in Masfile via mas. Apps that are
@@ -161,7 +163,11 @@ echo "🔗 Creating symlinks with stow..."
 echo ""
 for pkg in "${STOW_PACKAGES[@]}"; do
   printf "  → Linking %s..." "$pkg"
-  stow $STOW_FLAGS "$pkg"
+  if [ "$pkg" = opencode ]; then
+    opencode_stow "$DOTFILES_DIR" $STOW_FLAGS
+  else
+    stow $STOW_FLAGS "$pkg"
+  fi
   echo " ✓"
 done
 
@@ -260,6 +266,8 @@ fi
 # rewrites them — so they are deliberately NOT tracked in this repo; this
 # step recreates them on a fresh machine. Best-effort, same rationale as
 # the plugins block above.
+# Herdr's OpenCode installer/health check still require local V1 compatibility
+# assets alongside its V2 entrypoint. Keep those upstream-managed and untracked.
 HERDR_INTEGRATIONS=(claude opencode)
 if ! command -v herdr &>/dev/null; then
   echo "  ⚠️  herdr not on PATH yet — install integrations manually:"

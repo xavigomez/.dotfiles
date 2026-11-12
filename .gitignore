@@ -43,11 +43,20 @@ spotify-player/.config/spotify-player/credentials.json
 # downloaded binaries). Only pi/.pi/settings.json (skills config) is tracked.
 pi/.pi/agent/
 
-# opencode: tool-managed install footprint lives in the same dir as the config
+# opencode: runtime stays local; protect against older folded directory links
 opencode/.config/opencode/node_modules/
 opencode/.config/opencode/bun.lock
 opencode/.config/opencode/package.json
 opencode/.config/opencode/package-lock.json
+opencode/.config/opencode/.gitignore
+opencode/.config/opencode/service.json
+opencode/.config/opencode/cli.json.pre-*
+# Herdr-managed OpenCode integration, including upstream-required V1 compatibility
+opencode/.config/opencode/tui.json
+opencode/.config/opencode/tui.jsonc
+opencode/.config/opencode/herdr-tui-session.js
+opencode/.config/opencode/herdr-opencode/
+opencode/.config/opencode/plugins/herdr-agent-state.js
 
 # herdr: runtime/machine-managed state under ~/.config/herdr.
 # Only config.toml is versioned under this tree.
