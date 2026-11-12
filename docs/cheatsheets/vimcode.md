@@ -2,20 +2,26 @@
 
 Quick reference for [vimcode](https://github.com/oribarilan/vimcode), the OpenCode TUI plugin that adds Vim-style modal editing to the prompt input.
 
-Installed via `opencode/.config/opencode/tui.json`. Pin to a tagged version — OpenCode caches `@latest` forever.
+Installed via `opencode/.config/opencode/cli.json`, pinned to `v0.19.2`.
+This release's OpenCode V2 support is experimental; use a tagged ref for reproducible installs.
 
 ## Configuration
 
-Pass options via the tuple form in `tui.json`:
+Edit the existing Vimcode entry in `cli.json`, passing `options` beside `package`.
+Keep the separate `./herdr-opencode` entry used for Herdr reporting:
 
 ```json
 {
-  "plugin": [
-    ["vimcode@git+https://github.com/oribarilan/vimcode.git#v0.15.3", {
-      "updateCheck": true,
-      "modeIndicator": "toast",
-      "startMode": "insert"
-    }]
+  "plugins": [
+    {
+      "package": "vimcode@git+https://github.com/oribarilan/vimcode.git#v0.19.2",
+      "options": {
+        "updateCheck": true,
+        "modeIndicator": "toast",
+        "startMode": "insert"
+      }
+    },
+    "./herdr-opencode"
   ]
 }
 ```
@@ -25,8 +31,11 @@ Pass options via the tuple form in `tui.json`:
 | `updateCheck` | `boolean` | `true` | Daily GitHub version check on startup (the only network request). |
 | `modeIndicator` | `"toast"` \| `"none"` | `"toast"` | How mode switches are shown. `"none"` relies on cursor shape alone. |
 | `startMode` | `"insert"` \| `"normal"` | `"insert"` | Which mode OpenCode launches in. |
+| `experimentalV2Leader` | `string` \| `string[]` \| `false` | `"ctrl+x"` | Must match the host's leader; use `false` if disabled. |
 
-> `modeToast` and `leader` options existed in older versions but were removed. `modeIndicator` replaces `modeToast`; the leader key is auto-detected from `keybinds.leader`.
+The V2 adapter cannot auto-detect `keybinds.leader`. The default `ctrl+x`
+needs no extra option; if you change the host leader, also set
+`options.experimentalV2Leader` to match.
 
 ## Modes
 
@@ -71,6 +80,18 @@ All motions take counts: `3j` moves down 3 lines.
 | `dk` `ck` `yk` | Current + line above |
 | `dG` `cG` `yG` | To end of buffer |
 
+## Text Objects
+
+Combine with `d`, `c`, `y`, or visual selection: `diw`, `ci"`, `da(`, `viw`.
+
+| Object | Selects |
+|--------|---------|
+| `iw` / `aw` | Word / word plus surrounding whitespace |
+| `i"`, `i'`, `` i` `` | Inside matching quotes; `a` includes the quotes |
+| `i(`, `i{`, `i[`, `i<` | Inside brackets; `a` includes the delimiters |
+| `iq` / `aq` | Nearest quote of any type |
+| `ib` / `ab` | Nearest bracket of any type, not Vim's parentheses-only `ib` |
+
 ## Insert Entries
 
 | Key | Action |
@@ -107,6 +128,7 @@ All normal-mode motions extend the selection, with counts.
 | `p` | Paste from yank register |
 | `J` | Join current line with next |
 | `:` | Command palette |
+| `:w` `:write` | Submit prompt |
 | `:q` `:quit` `:wq` | Quit OpenCode |
 | `:vim` | Toggle vim mode on/off (persisted across restarts) |
 | `/` | Jump to message (session timeline) |
@@ -118,27 +140,28 @@ All normal-mode motions extend the selection, with counts.
 ## Behaviors
 
 - **Overlay passthrough** — when OpenCode shows UI (command palette, `/sessions`, `@` file picker, question/permission prompts), vimcode steps aside and all keys pass through.
-- **Leader key** — auto-detected from `keybinds.leader`. In normal/visual, the leader and follow-up pass straight through. In insert, printable leaders (space) type their character; non-printable (`ctrl+x`) pass through.
+- **Leader key** — `experimentalV2Leader` must match `keybinds.leader`. In normal/visual, the leader and follow-up pass straight through. In insert, printable leaders (space) type their character; non-printable (`ctrl+x`) pass through.
+- **Question answers** — free-text answers have their own Vim editing state. Enter/Tab retain OpenCode's native form behavior; question choices and permissions remain host-controlled.
 - **Cursor shape** — block in normal, bar in insert. Works across all terminals (uses `cursorStyle`, not DECSCUSR escapes).
 - **System clipboard** — `pbcopy` (macOS), `clip.exe` (Windows), `xclip`/`wl-copy` (Linux). Falls back to an internal register if no clipboard tool is installed.
-- **Update checker** — daily GitHub API check, cached via `api.kv`, toast on new version. Disable with `updateCheck: false`.
+- **Update checker** — daily GitHub API check, cached in plugin storage, toast on new version. Disable with `updateCheck: false`.
 - **No telemetry** — the GitHub version check is the only network request.
 
 ## Known Gaps
 
 - No block visual mode (`Ctrl+V`).
-- No text objects (`ciw`, `di"`, `da(`, etc.) — backlog priority #1.
 - No persistent mode indicator — toast fades after ~1s. Slot-based indicator is blocked by host JSX resolution limits for git-installed plugins.
-- Normal-mode cursor can land past last character after `$` or `A` + Escape.
-- `p` always pastes at cursor, not after (vim convention) for character-wise yanks.
 - No configurable keymaps yet (`jk` to exit insert, `Y` → `y$`, etc. are on the roadmap).
 
 ## Upgrading
 
-Bump the version ref in `opencode/.config/opencode/tui.json` and restart OpenCode. The cache invalidates on tag change.
+Bump the tagged ref in the existing Vimcode `package` entry in
+`opencode/.config/opencode/cli.json`, retaining its options and other plugins.
+Saved configuration reloads automatically; use `/reload` to force a reload.
+No background-service restart is needed.
 
 ```json
-"plugin": ["vimcode@git+https://github.com/oribarilan/vimcode.git#v0.15.4"]
+{"package": "vimcode@git+https://github.com/oribarilan/vimcode.git#v0.19.2"}
 ```
 
 Check for new releases at <https://github.com/oribarilan/vimcode/releases>.

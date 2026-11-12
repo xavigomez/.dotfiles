@@ -13,7 +13,7 @@ My personal dotfiles managed with GNU Stow.
 ├── nvim/             # Neovim + LazyVim (extras via lazyvim.json)
 ├── helix/            # Helix editor, trialed for Rust next to nvim
 ├── claude/           # Claude Code skills (settings.json stays local, see the herdr section)
-├── opencode/         # OpenCode agent settings + TUI plugins
+├── opencode/         # OpenCode V2 model settings + terminal preferences/plugins
 ├── herdr/            # herdr agent multiplexer config (active settings only)
 ├── pi/               # pi coding agent settings (state stays untracked)
 ├── spotify-player/   # spotify-player TUI config (app.example.toml template)
@@ -21,6 +21,8 @@ My personal dotfiles managed with GNU Stow.
 ├── Herdrfile         # Declarative herdr plugin list (pinned via --ref)
 ├── Brewfile          # Homebrew packages and casks
 ├── install.sh        # Bootstrap script
+├── lib/              # Bootstrap helpers (OpenCode version check and safe linking)
+├── tests/            # Isolated bootstrap/configuration checks
 ├── macos.sh          # Native window shortcuts, applied by install.sh
 ├── .gitignore        # Git ignore patterns
 └── README.md         # This file
@@ -48,7 +50,7 @@ palette *is* the terminal theme — one change in Ghostty re-themes all of them:
 |---|---|---|
 | nvim | Tokyoppuccin Storm (Catppuccin-flavored Tokyo Night, bg matched to chrome `#222436`) | `EmmanuelVernet/tokyoppuccin.nvim` via `nvim/.../plugins/tokyoppuccin.lua` |
 | helix | built-in `tokyonight_moon` (bg already the chrome's `#222436`) with dimmed diagnostics and inlay hints | `helix/.config/helix/themes/tokyonight_moon_dim.toml` |
-| opencode | its own built-in default theme | unset — follows nothing |
+| opencode | built-in `tokyonight` | `opencode/.config/opencode/cli.json` |
 
 Notes:
 
@@ -211,6 +213,72 @@ against vim/LazyVim: `docs/cheatsheets/helix.md`.
   package dir to know what to unlink), then `brew uninstall helix`.
 
 
+## opencode
+
+OpenCode V2 comes from the Homebrew `opencode` formula. Bootstrap verifies the
+major version before linking configuration. Only two files are managed here:
+
+| File under `opencode/.config/opencode/` | Owns |
+|---|---|
+| `opencode.jsonc` | Default `opencode-go/glm-5.2` model, with high reasoning in its native model settings |
+| `cli.json` | Tokyo Night, word-wrapped diffs, automatic sidebar, hidden scrollbar, visible thinking, animations, and TUI plugins |
+
+The root model selection does not retain a variant, so high reasoning is set
+under `providers.opencode-go.models.glm-5.2.settings`, not appended to the root
+model ID. A session's explicitly selected model still takes precedence.
+
+Vimcode is pinned to `v0.19.2`; its V2 support is experimental. Options and keys
+are in [the cheatsheet](docs/cheatsheets/vimcode.md). Herdr's V2 plugin is
+registered as `./herdr-opencode`, relative to the live config directory.
+
+`lib/opencode.sh` uses `stow --no-folding --restow`: `~/.config/opencode/`
+remains a real directory, with individual configuration-file symlinks. This
+keeps runtime writes out of the repository, even on a fresh machine. Local
+conflicts are refused, never adopted. To reapply just this setup from the repo:
+
+```bash
+source lib/opencode.sh
+opencode_require_v2 && opencode_stow "$PWD" && herdr integration install opencode
+```
+
+Saved settings reload automatically; `/reload` forces a full reload. Do not
+restart a healthy background service just to apply configuration changes.
+
+### Herdr compatibility exception
+
+Herdr 0.9.5 installs both native V2 support and legacy compatibility assets.
+Its health check still requires the latter. These files stay local and are
+**Herdr-managed**, not tracked or maintained as a custom plugin fork:
+
+- `~/.config/opencode/herdr-opencode/tui.js` — native V2 entrypoint.
+- `~/.config/opencode/herdr-tui-session.js` — shared session-reporting implementation.
+- `~/.config/opencode/plugins/herdr-agent-state.js` — compatibility server plugin.
+- `~/.config/opencode/tui.jsonc` — compatibility registration, not the V2 preferences file.
+
+Keep these until upstream supports V2-only installation and health checks.
+Check with `herdr integration status`; reinstall with
+`herdr integration install opencode`. Plugin packages may also contain their
+own compatibility code; that is not an active V1 installation.
+
+### Existing-machine cleanup and checks
+
+The old tracked `tui.json` is retired. Before deleting a legacy symlink, verify
+that it points to this repository; never remove a hand-written local config
+without reviewing it. Preserve any preferences before removing unused V1 SDK
+dependencies, their manifests/lockfiles, redundant backup configs, or individually
+identified old plugin caches. Do not wipe OpenCode's data/state directories:
+credentials, session history, permissions, and service state must survive.
+
+Run the isolated checks with Python 3, GNU Stow, and Herdr installed:
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+Tests use temporary homes, not live settings. They cover version checks, fresh
+and repeated linking, old folded links, conflict refusal, native configuration,
+and Herdr's installer preserving symlinks/preferences without duplicate entries.
+
 ## herdr
 
 Agent multiplexer — autostarted by `.zshrc` on interactive TTYs (guarded
@@ -328,7 +396,7 @@ The script will:
 1. Install Xcode Command Line Tools (if needed)
 2. Install Homebrew (if needed)
 3. Install GNU Stow (if needed)
-4. Run `brew bundle` to install all packages
+4. Run `brew bundle` to install all packages and verify OpenCode V2
 5. Use stow to create symlinks for: zsh, starship, zed, nvim, helix, claude, opencode, herdr, spotify-player, pi, git
 6. Link the Ghostty and Lazygit configs
 7. Apply native macOS window shortcuts via `macos.sh` (replaces Rectangle)
@@ -436,7 +504,8 @@ Some apps (CLIs, agents, etc.) keep their own config directory and write their o
 - `~/.pi/agent/settings.json` — pi's runtime state (last-used model, version)
 - `~/.pi/agent/bin/` — binaries pi downloads on demand
 - `~/.claude/hooks/herdr-agent-state.sh` — herdr's claude-code integration hook (herdr-managed, recreated by `herdr integration install`; see the herdr section)
-- `~/.config/opencode/plugins/herdr-agent-state.js` — same, for opencode
+- `~/.config/opencode/herdr-opencode/`, `herdr-tui-session.js`, `plugins/herdr-agent-state.js`, and `tui.jsonc` — Herdr's OpenCode integration (see the compatibility exception above)
+- `~/.config/opencode/service.json` — machine-local service configuration; never track it
 - `~/.config/spotify-player/credentials.json` — spotify-player's OAuth state
 - anything matching `**/auth.json`, `**/credentials.json`, `**/.env*`
 
