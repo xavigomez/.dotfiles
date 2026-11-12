@@ -135,6 +135,69 @@ class BootstrapTests(unittest.TestCase):
         self.assertEqual(self.config.resolve(), elsewhere)
         self.assertEqual((elsewhere / "cli.json").read_text(), "local preferences\n")
 
+    @unittest.skipUnless(shutil.which("herdr"), "Herdr is required for integration checks")
+    def test_herdr_preserves_preferences_links_and_single_registration(self):
+        preferences = json.loads((ROOT / "opencode/.config/opencode/cli.json").read_text())
+        # Exercise Herdr's config writer, not just its already-registered path.
+        preferences["plugins"] = [p for p in preferences["plugins"] if p != "./herdr-opencode"]
+        (self.source / "cli.json").write_text(json.dumps(preferences, indent=2) + "\n")
+        self.stow()
+        env = {
+            **self.env,
+            "XDG_CONFIG_HOME": str(self.home / ".config"),
+            "XDG_STATE_HOME": str(self.home / ".local/state"),
+            "XDG_DATA_HOME": str(self.home / ".local/share"),
+            "XDG_CACHE_HOME": str(self.home / ".cache"),
+        }
+        for _ in range(2):
+            result = subprocess.run(
+                ["herdr", "integration", "install", "opencode"],
+                env=env, cwd=self.home, capture_output=True, text=True, timeout=30,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            actual = json.loads((self.config / "cli.json").read_text())
+            self.assertEqual(actual["plugins"], [*preferences["plugins"], "./herdr-opencode"])
+            self.assertEqual(
+                {k: v for k, v in actual.items() if k != "plugins"},
+                {k: v for k, v in preferences.items() if k != "plugins"},
+            )
+            self.stow()
+        self.assertTrue((self.config / "herdr-opencode/tui.js").is_file())
+        self.assertEqual(sorted(p.name for p in self.source.iterdir()), ["cli.json", "opencode.jsonc"])
+        status = subprocess.run(
+            ["herdr", "integration", "status"],
+            env=env, cwd=self.home, capture_output=True, text=True, timeout=30,
+        )
+        self.assertEqual(status.returncode, 0, status.stderr)
+        self.assertRegex(status.stdout, r"(?m)^opencode: current")
+
+
+class ConfigurationTests(unittest.TestCase):
+    def setUp(self):
+        self.config = ROOT / "opencode/.config/opencode"
+        self.cli = json.loads((self.config / "cli.json").read_text())
+
+    def test_only_native_configuration_files_are_present(self):
+        self.assertEqual(sorted(p.name for p in self.config.iterdir()), ["cli.json", "opencode.jsonc"])
+        server = json.loads((self.config / "opencode.jsonc").read_text())
+        self.assertEqual(server["$schema"], "https://opencode.ai/config.json")
+        self.assertEqual(server["model"], "opencode-go/glm-5.2")
+        self.assertEqual(server["providers"]["opencode-go"]["models"]["glm-5.2"]["settings"], {"reasoningEffort": "high"})
+
+    def test_terminal_preferences_are_preserved(self):
+        self.assertEqual(self.cli["$schema"], "https://opencode.ai/v2/cli.json")
+        self.assertEqual(self.cli["theme"], {"name": "tokyonight"})
+        self.assertEqual(self.cli["diffs"], {"wrap": "word"})
+        self.assertEqual(self.cli["session"], {"sidebar": "auto", "scrollbar": False, "thinking": "show"})
+        self.assertTrue(self.cli["animations"])
+        self.assertNotIn("plugin", self.cli)
+
+    def test_plugins_use_native_v2_entries(self):
+        self.assertEqual(self.cli["plugins"], [
+            {"package": "vimcode@git+https://github.com/oribarilan/vimcode.git#v0.19.2"},
+            "./herdr-opencode",
+        ])
+
 
 if __name__ == "__main__":
     unittest.main()

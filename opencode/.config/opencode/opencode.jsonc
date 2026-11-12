@@ -1,4 +1,15 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "opencode-go/glm-5.2-high"
+  "model": "opencode-go/glm-5.2",
+  "providers": {
+    "opencode-go": {
+      "models": {
+        "glm-5.2": {
+          "settings": {
+            "reasoningEffort": "high"
+          }
+        }
+      }
+    }
+  }
 }
