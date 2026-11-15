@@ -265,8 +265,7 @@ Wayfinder is manual-only (`@wayfinder`). Its companion skills are bundled global
 `grilling`, `domain-modeling`, `research`, `prototype`, and
 `setup-matt-pocock-skills`, including their supporting files. These five are
 unmodified copies from [mattpocock/skills at
-`5863806dd4e15c63174bee4e7515a4256792ecfa`](https://github.com/mattpocock/skills/tree/5863806dd4e15c63174bee4e7515a4256792ecfa/skills),
-with the MIT notice in `skills/LICENSE.mattpocock`.
+`5863806dd4e15c63174bee4e7515a4256792ecfa`](https://github.com/mattpocock/skills/tree/5863806dd4e15c63174bee4e7515a4256792ecfa/skills).
 
 Run `@setup-matt-pocock-skills` separately in each project to choose its issue
 tracker and domain-doc layout. Installing the skills does not configure projects.
