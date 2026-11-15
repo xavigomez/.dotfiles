@@ -216,16 +216,20 @@ against vim/LazyVim: `docs/cheatsheets/helix.md`.
 ## opencode
 
 OpenCode V2 comes from the Homebrew `opencode` formula. Bootstrap verifies the
-major version before linking configuration. Only two files are managed here:
+major version before linking user configuration and skills:
 
-| File under `opencode/.config/opencode/` | Owns |
+| File or directory under `opencode/.config/opencode/` | Owns |
 |---|---|
-| `opencode.jsonc` | Default `opencode-go/glm-5.2` model, with high reasoning in its native model settings |
-| `cli.json` | Tokyo Night, word-wrapped diffs, automatic sidebar, hidden scrollbar, visible thinking, animations, and TUI plugins |
+| `opencode.jsonc` | OpenAI-only provider policy; default `openai/gpt-6.1-sol` model with high reasoning |
+| `cli.json` | Tokyo Night in system mode, word-wrapped diffs, automatic sidebar, hidden scrollbar, visible thinking, animations, and TUI plugins |
+| `skills/` | Global skills, including Wayfinder and its supporting files |
 
 The root model selection does not retain a variant, so high reasoning is set
-under `providers.opencode-go.models.glm-5.2.settings`, not appended to the root
+under `providers.openai.models.gpt-6.1-sol.settings`, not appended to the root
 model ID. A session's explicitly selected model still takes precedence.
+
+Provider policies deny every model provider except `openai`, including providers
+discovered through saved accounts, environment variables, and built-in plugins.
 
 Vimcode is pinned to `v0.19.2`; its V2 support is experimental. Options and keys
 are in [the cheatsheet](docs/cheatsheets/vimcode.md). Herdr's V2 plugin is
@@ -243,6 +247,29 @@ opencode_require_v2 && opencode_stow "$PWD" && herdr integration install opencod
 
 Saved settings reload automatically; `/reload` forces a full reload. Do not
 restart a healthy background service just to apply configuration changes.
+
+### Adding a global skill
+
+Add the skill to `opencode/.config/opencode/skills/<skill-id>/SKILL.md` in this
+repository, with its supporting files beside it. Then run from the repo root:
+
+```bash
+stow --no-folding --restow opencode
+```
+
+Stow does not watch for additions: new files need restowing, while edits to
+already-linked files are visible immediately. Use `/reload` in OpenCode if the
+new skill is not discovered, then invoke it with `@<skill-id>`.
+
+Wayfinder is manual-only (`@wayfinder`). Its companion skills are bundled globally:
+`grilling`, `domain-modeling`, `research`, `prototype`, and
+`setup-matt-pocock-skills`, including their supporting files. These five are
+unmodified copies from [mattpocock/skills at
+`5863806dd4e15c63174bee4e7515a4256792ecfa`](https://github.com/mattpocock/skills/tree/5863806dd4e15c63174bee4e7515a4256792ecfa/skills),
+with the MIT notice in `skills/LICENSE.mattpocock`.
+
+Run `@setup-matt-pocock-skills` separately in each project to choose its issue
+tracker and domain-doc layout. Installing the skills does not configure projects.
 
 ### Herdr compatibility exception
 
@@ -276,8 +303,9 @@ python3 -m unittest discover -s tests -v
 ```
 
 Tests use temporary homes, not live settings. They cover version checks, fresh
-and repeated linking, old folded links, conflict refusal, native configuration,
-and Herdr's installer preserving symlinks/preferences without duplicate entries.
+and repeated linking, newly added skills, old folded links, conflict refusal,
+native configuration, and Herdr's installer preserving symlinks/preferences
+without duplicate entries.
 
 ## herdr
 
