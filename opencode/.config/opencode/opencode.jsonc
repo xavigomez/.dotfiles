@@ -4,6 +4,14 @@
   "experimental": {
     "subagent_depth": 2
   },
+  "agents": {
+    "general": {
+      "model": "openai/gpt-6.1-sol#high"
+    },
+    "explore": {
+      "model": "openai/gpt-6-luna#max"
+    }
+  },
   "policies": [
     { "action": "provider.use", "resource": "*", "effect": "deny" },
     { "action": "provider.use", "resource": "openai", "effect": "allow" }
