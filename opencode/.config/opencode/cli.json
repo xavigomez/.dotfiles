@@ -13,6 +13,9 @@
   "diffs": {
     "wrap": "word"
   },
+  "prompt": {
+    "paste": "full"
+  },
   "session": {
     "sidebar": "auto",
     "scrollbar": false,
